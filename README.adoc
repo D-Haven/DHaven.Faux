@@ -28,12 +28,12 @@ namespace Fortune_Teller_UI.Services
     [Route("api/fortunes")]
     public interface IFortuneService
     {
-	    // GET api/fortunes
-		[HttpGet]
+	// GET api/fortunes
+	[HttpGet]
         Task<IEnumerable<Fortune>> Get();
 
-		// GET api/fortunes/random
-		[HttpGet("random")]
+	// GET api/fortunes/random
+	[HttpGet("random")]
         public Fortune Random();
     }
 }
