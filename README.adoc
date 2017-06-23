@@ -1,0 +1,49 @@
+= DHaven.Faux
+
+NetFlix created a bunch of really useful cloud projects, all of which are Java based.
+Steeltoe OSS has made service discovery and a few other integrations available to the
+Dotnet community.  One glaring missing feature is an analog for Feign.  This library
+intends to fill that gap.  I'm only one guy, so I appreciate any help I can get.
+
+== What will DHaven.Faux do?
+
+Given an interface to a web service with all the Mvc attributes decorating the methods,
+DHaven.Faux will generate an implementation that calls the web service for you.  It will
+even use Steeltoe.Discovery.Client to resolve the service for you.
+
+Even better, this will be integrated with Microsoft's Dependency Injection framework so
+that you only have to add your interface, and Faux will generate the implementation.
+
+The following interface:
+
+----
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Fortune_Teller_UI.Services
+{
+    [ServiceName("fortuneService")]
+    [Route("api/fortunes")]
+    public interface IFortuneService
+    {
+	    // GET api/fortunes
+		[HttpGet]
+        Task<IEnumerable<Fortune>> Get();
+
+		// GET api/fortunes/random
+		[HttpGet("random")]
+        public Fortune Random();
+    }
+}
+----
+
+Will have all the plumbing done for you so that you can use the service just like
+a standard CSharp object.  (Appologies to Steeltoe, I adapted their starter example)
+
+
+== What does DHaven.Faux do right now?
+
+Not much.  As of 6/22/2017 I just started the project.  Hopefully I'll remember to update
+this page...
