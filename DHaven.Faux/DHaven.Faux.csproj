@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>netstandard1.5</TargetFramework>
     <Authors>Berin Loritsch</Authors>
@@ -7,9 +6,8 @@
     <Description>DotNet implementation of NetFlix Feign (https://github.com/OpenFeign/feign).  Integrates with Microsoft DependencyInjection to generate the wrapper code from an interface representing a Rest end point.</Description>
     <Copyright>Copyright 2017 by D-Haven.org</Copyright>
   </PropertyGroup>
-
   <ItemGroup>
+    <PackageReference Include="newtonsoft.json" Version="10.0.3" />
     <PackageReference Include="steeltoe.discovery.client" Version="1.0.1" />
   </ItemGroup>
-
 </Project>
