@@ -17,6 +17,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -49,14 +50,16 @@ namespace DHaven.Faux.Compiler
 
                 var responseMessage = await client.SendAsync(requestMessage);
 
-                if (responseMessage.StatusCode == HttpStatusCode.NoContent)
-                {
-                    return default(TResponse);
-                }
-
                 if (responseMessage.IsSuccessStatusCode)
                 {
-                    return JsonConvert.DeserializeObject<TResponse>(await responseMessage.Content.ReadAsStringAsync());
+                    switch (responseMessage.StatusCode)
+                    {
+                        case HttpStatusCode.NoContent:
+                            return default(TResponse);
+
+                        default:
+                            return JsonConvert.DeserializeObject<TResponse>(await responseMessage.Content.ReadAsStringAsync());
+                    }
                 }
 
                 throw new HttpRequestException(
