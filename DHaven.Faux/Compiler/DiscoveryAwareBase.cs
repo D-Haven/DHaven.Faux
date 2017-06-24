@@ -27,16 +27,16 @@ namespace DHaven.Faux.Compiler
 {
     public class DiscoveryAwareBase
     {
-        private readonly Uri baseUri = new Uri("http://serviceName/api/base");
+        private readonly Uri baseUri;
         private readonly DiscoveryHttpClientHandler handler;
 
-        public DiscoveryAwareBase(IDiscoveryClient client)
+        public DiscoveryAwareBase(IDiscoveryClient client, string serviceName, string baseRoute)
         {
+            baseUri = new Uri($"http://{serviceName}/{baseRoute}");
             handler = new DiscoveryHttpClientHandler(client);
         }
 
-        protected async Task<TResponse> SendAsJsonAsync<TRequest, TResponse>(
-            HttpMethod method, string endPoint, TRequest data)
+        protected async Task<TResponse> SendAsJsonAsync<TResponse>(HttpMethod method, string endPoint, object data)
         {
             using (var client = GetClient())
             {
@@ -50,20 +50,15 @@ namespace DHaven.Faux.Compiler
 
                 var responseMessage = await client.SendAsync(requestMessage);
 
-                if (responseMessage.IsSuccessStatusCode)
+                if (!responseMessage.IsSuccessStatusCode)
                 {
-                    switch (responseMessage.StatusCode)
-                    {
-                        case HttpStatusCode.NoContent:
-                            return default(TResponse);
-
-                        default:
-                            return JsonConvert.DeserializeObject<TResponse>(await responseMessage.Content.ReadAsStringAsync());
-                    }
+                    throw new HttpRequestException(
+                        $"Unsuccessful response status: {responseMessage.StatusCode} {responseMessage.ReasonPhrase}");
                 }
 
-                throw new HttpRequestException(
-                    $"Unsuccessful response status: {responseMessage.StatusCode} {responseMessage.ReasonPhrase}");
+                return responseMessage.StatusCode == HttpStatusCode.NoContent
+                    ? default(TResponse)
+                    : JsonConvert.DeserializeObject<TResponse>(await responseMessage.Content.ReadAsStringAsync());
             }
         }
 
