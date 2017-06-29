@@ -21,14 +21,14 @@ namespace DHaven.Faux
     public class Faux<TService>
         where TService : class // Really an interface
     {
+        private TService service;
+        private readonly WebServiceCompiler<TService> compiler;
+
         public Faux()
         {
-            var compiler = new WebServiceCompiler<TService>();
-            compiler.Verify();
-
-            Service = compiler.Generate();
+            compiler = new WebServiceCompiler<TService>();
         }
 
-        public TService Service { get; }
+        public TService Service => service ?? (service = compiler.Generate());
     }
 }
