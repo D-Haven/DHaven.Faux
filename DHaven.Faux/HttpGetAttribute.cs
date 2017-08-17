@@ -1,17 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DHaven.Faux
 {
+    /// <summary>
+    /// Make a GET service call.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public class HttpGetAttribute : Attribute
+    public class HttpGetAttribute : HttpMethodAttribute
     {
-        public HttpGetAttribute(string path = "")
-        {
-            Path = path ?? string.Empty;
-        }
-
-        public string Path { get; set; }
+        public HttpGetAttribute(string path = null) : base("GET", path) { }
     }
 }

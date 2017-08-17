@@ -1,19 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DHaven.Faux
 {
+    /// <summary>
+    /// Mark the relative route to find the service.  Use this if you
+    /// are not using a discovery service.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Interface)]
     public class RouteAttribute : Attribute
     {
-        public RouteAttribute(string baseRoute)
+        public RouteAttribute(string baseRoute = null)
         {
-            BaseRoute = baseRoute;
+            BaseRoute = baseRoute ?? string.Empty;
         }
 
         public string BaseRoute { get; set; }
-
-        public string ServiceName { get; set; }
     }
 }

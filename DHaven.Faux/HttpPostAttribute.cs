@@ -1,17 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DHaven.Faux
 {
+    /// <summary>
+    /// Make a POST service call.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public class HttpPostAttribute : Attribute
+    public class HttpPostAttribute : HttpMethodAttribute
     {
-        public HttpPostAttribute(string path = "")
-        {
-            Path = path ?? string.Empty;
-        }
-
-        public string Path { get; set; }
+        public HttpPostAttribute(string path = null) : base("POST", path) { }
     }
 }

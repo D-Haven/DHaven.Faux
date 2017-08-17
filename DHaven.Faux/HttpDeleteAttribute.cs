@@ -1,17 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DHaven.Faux
 {
+    /// <summary>
+    /// Make a DELETE service call.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public class HttpDeleteAttribute : Attribute
+    public class HttpDeleteAttribute : HttpMethodAttribute
     {
-        public HttpDeleteAttribute(string path = "")
-        {
-            Path = path ?? string.Empty;
-        }
-
-        public string Path { get; set; }
+        public HttpDeleteAttribute(string path = null) : base("DELETE", path) { }
     }
 }

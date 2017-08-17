@@ -5,11 +5,11 @@ using System.Text;
 namespace DHaven.Faux
 {
     /// <summary>
-    /// The value of this parameter will be used for the body of
-    /// the message.
+    /// Used to mark the method parameter as the value for the path
+    /// variable in the HttpMethodAttribute.
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter)]
-    public class BodyAttribute : Attribute
+    public class PathValueAttribute : Attribute
     {
     }
 }
