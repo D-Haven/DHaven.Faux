@@ -26,6 +26,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using TypeInfo = System.Reflection.TypeInfo;
+using System.Text.RegularExpressions;
 
 namespace DHaven.Faux.Compiler
 {
@@ -54,7 +55,7 @@ namespace DHaven.Faux.Compiler
         {
             if (!typeInfo.IsInterface)
             {
-                throw new NotSupportedException($"{typeInfo.FullName} must be an interface");
+                throw new ArgumentException($"{typeInfo.FullName} must be an interface");
             }
 
             var classDeclaration = SyntaxFactory.ClassDeclaration(typeInfo.Name);
@@ -72,7 +73,53 @@ namespace DHaven.Faux.Compiler
 
         private MemberDeclarationSyntax CreateWrapper(MethodInfo method)
         {
-            throw new NotImplementedException();
+            HttpMethodAttribute callType = method.GetCustomAttribute<HttpMethodAttribute>();
+
+            if (callType == null)
+            {
+                throw new ArgumentException($"{method.Name}() is not a web service call");
+            }
+
+            string endpoint = callType.Path ?? string.Empty;
+            object data;
+
+            foreach (ParameterInfo param in method.GetParameters())
+            {
+                BodyAttribute body = param.GetCustomAttribute<BodyAttribute>();
+                if (body != null)
+                {
+                    data = body;
+                    continue;
+                }
+
+                PathValueAttribute path = param.GetCustomAttribute<PathValueAttribute>();
+                if (path != null)
+                {
+                    // path replacement
+                    string pathVariable = string.IsNullOrEmpty(path.Variable) ? param.Name : path.Variable;
+                    throw new NotSupportedException("Path Variables are not supported yte.");
+                    continue;
+                }
+
+                RequestHeaderAttribute header = param.GetCustomAttribute<RequestHeaderAttribute>();
+                // request header
+                if(header != null)
+                {
+                    throw new NotSupportedException("Request Headers are not supported yet.");
+                    continue;
+                }
+
+                RequestParameterAttribute reqParam = param.GetCustomAttribute<RequestParameterAttribute>();
+                // request parameter
+                if(reqParam != null)
+                {
+                    string paramName = reqParam.Parameter ?? param.Name;
+                    throw new NotSupportedException("Request Parameters are not supported yet.");
+                    continue;
+                }
+            }
+
+            throw new NotImplementedException("We haven't generated the method yet.  Sorry.");
         }
 
         public object Generate()

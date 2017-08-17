@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http;
 
 namespace DHaven.Faux
 {
@@ -8,6 +9,6 @@ namespace DHaven.Faux
     [AttributeUsage(AttributeTargets.Method)]
     public class HttpGetAttribute : HttpMethodAttribute
     {
-        public HttpGetAttribute(string path = null) : base("GET", path) { }
+        public HttpGetAttribute(string path = null) : base(HttpMethod.Get, path) { }
     }
 }

@@ -11,5 +11,11 @@ namespace DHaven.Faux
     [AttributeUsage(AttributeTargets.Parameter)]
     public class PathValueAttribute : Attribute
     {
+        public PathValueAttribute(string param = null)
+        {
+            Variable = param;
+        }
+
+        public string Variable { get; private set; }
     }
 }

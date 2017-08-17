@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http;
 
 namespace DHaven.Faux
 {
@@ -8,6 +9,6 @@ namespace DHaven.Faux
     [AttributeUsage(AttributeTargets.Method)]
     public class HttpDeleteAttribute : HttpMethodAttribute
     {
-        public HttpDeleteAttribute(string path = null) : base("DELETE", path) { }
+        public HttpDeleteAttribute(string path = null) : base(HttpMethod.Delete, path) { }
     }
 }

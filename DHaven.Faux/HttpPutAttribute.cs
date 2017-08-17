@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http;
 
 namespace DHaven.Faux
 {
@@ -8,6 +9,6 @@ namespace DHaven.Faux
     [AttributeUsage(AttributeTargets.Method)]
     public class HttpPutAttribute : HttpMethodAttribute
     {
-        public HttpPutAttribute(string path = null) : base("PUT", path) { }
+        public HttpPutAttribute(string path = null) : base(HttpMethod.Put, path) { }
     }
 }
