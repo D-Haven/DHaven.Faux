@@ -7,9 +7,9 @@ namespace DHaven.Faux
     /// service.
     /// </summary>
     [AttributeUsage(AttributeTargets.Interface)]
-    public class ServiceAttribute : Attribute
+    public class FauxClientAttribute : Attribute
     {
-        public ServiceAttribute(string name)
+        public FauxClientAttribute(string name)
         {
             Name = name;
         }
