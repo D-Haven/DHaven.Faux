@@ -5,7 +5,7 @@ namespace ExampleClient
 {
     [FauxClient("values")]
     [Route("api/values")]
-    interface IValuesService
+    public interface IValuesService
     {
         [HttpGet]
         IEnumerable<string> Get();

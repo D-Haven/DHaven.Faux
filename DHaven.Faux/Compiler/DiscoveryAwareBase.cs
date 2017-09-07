@@ -21,10 +21,11 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Steeltoe.Discovery.Client;
+using System.Dynamic;
 
 namespace DHaven.Faux.Compiler
 {
-    public class DiscoveryAwareBase
+    public class DiscoveryAwareBase : DynamicObject, IDynamicMetaObjectProvider
     {
         private readonly Uri baseUri;
         private readonly DiscoveryHttpClientHandler handler;
@@ -33,6 +34,12 @@ namespace DHaven.Faux.Compiler
         {
             baseUri = new Uri($"http://{serviceName}/{baseRoute}");
             handler = new DiscoveryHttpClientHandler(client);
+        }
+
+        public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
+        {
+            throw new Exception("Just checkin'");
+            return base.TryInvoke(binder, args, out result);
         }
 
         protected async Task<TResponse> SendAsJsonAsync<TResponse>(HttpMethod method, string endPoint, object data)

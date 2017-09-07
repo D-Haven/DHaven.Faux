@@ -24,9 +24,9 @@ using System.Runtime.Loader;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using TypeInfo = System.Reflection.TypeInfo;
-using System.Text.RegularExpressions;
+using System.Dynamic;
+using Steeltoe.Discovery.Client;
 
 namespace DHaven.Faux.Compiler
 {
@@ -40,86 +40,60 @@ namespace DHaven.Faux.Compiler
         private static readonly ISet<string> References = new HashSet<string>
         {
             typeof(DiscoveryAwareBase).GetTypeInfo().Assembly.Location,
-            typeof(string).GetTypeInfo().Assembly.Location
+            typeof(DynamicObject).GetTypeInfo().Assembly.Location,
+            typeof(IDiscoveryClient).GetTypeInfo().Assembly.Location
         };
 
         protected WebServiceComplier(TypeInfo type)
         {
             typeInfo = type;
             newClassName = $"{RootNamespace}.{typeInfo.Name}";
-            References.Add(typeInfo.Assembly.Location);
+            UpdateReferences(typeInfo.Assembly);
             Define();
+        }
+
+        private void UpdateReferences(Assembly assembly)
+        {
+            string referenceLocation = assembly.Location;
+
+            if (!References.Contains(referenceLocation))
+            {
+                References.Add(referenceLocation);
+
+                foreach(var dependency in assembly.GetReferencedAssemblies())
+                {
+                    UpdateReferences(Assembly.Load(dependency));
+                }
+            }
         }
 
         public void Define()
         {
-            if (!typeInfo.IsInterface)
+            if (!typeInfo.IsInterface || !typeInfo.IsPublic)
             {
-                throw new ArgumentException($"{typeInfo.FullName} must be an interface");
+                throw new ArgumentException($"{typeInfo.FullName} must be a public interface");
             }
 
-            var classDeclaration = SyntaxFactory.ClassDeclaration(typeInfo.Name);
-
-            classDeclaration.AddMembers(typeInfo.GetMethods().Select(CreateWrapper).ToArray());
-
-            var compilationUnit = SyntaxFactory.CompilationUnit();
-            compilationUnit.AddMembers(
-                SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName(RootNamespace))
-                .AddMembers(classDeclaration)
-            );
-
-            syntaxTrees.Add(compilationUnit.SyntaxTree);
-        }
-
-        private MemberDeclarationSyntax CreateWrapper(MethodInfo method)
-        {
-            HttpMethodAttribute callType = method.GetCustomAttribute<HttpMethodAttribute>();
-
-            if (callType == null)
+            if (typeInfo.IsGenericType)
             {
-                throw new ArgumentException($"{method.Name}() is not a web service call");
+                throw new NotSupportedException($"Generic interfaces are not supported: {typeInfo.FullName}");
             }
 
-            string endpoint = callType.Path ?? string.Empty;
-            object data;
+            var className = typeInfo.FullName.Replace(".", string.Empty);
+            var serviceName = typeInfo.GetCustomAttribute<FauxClientAttribute>().Name;
+            var baseRoute = typeInfo.GetCustomAttribute<RouteAttribute>().BaseRoute;
 
-            foreach (ParameterInfo param in method.GetParameters())
-            {
-                BodyAttribute body = param.GetCustomAttribute<BodyAttribute>();
-                if (body != null)
-                {
-                    data = body;
-                    continue;
-                }
+            var classBuilder = new StringBuilder();
+            classBuilder.AppendLine($"namespace {RootNamespace}");
+            classBuilder.AppendLine("{");
+            classBuilder.AppendLine($"    public class {className} : DHaven.Faux.Compiler.DiscoveryAwareBase, {typeInfo.FullName}");
+            classBuilder.AppendLine("    {");
+            classBuilder.AppendLine($"        public {className}(Steeltoe.Discovery.Client.IDiscoveryClient client)");
+            classBuilder.AppendLine($"            : base(client, \"{serviceName}\", \"{baseRoute}\") {{ }}");
+            classBuilder.AppendLine("    }");
+            classBuilder.AppendLine("}");
 
-                PathValueAttribute path = param.GetCustomAttribute<PathValueAttribute>();
-                if (path != null)
-                {
-                    // path replacement
-                    string pathVariable = string.IsNullOrEmpty(path.Variable) ? param.Name : path.Variable;
-                    throw new NotSupportedException("Path Variables are not supported yte.");
-                    continue;
-                }
-
-                RequestHeaderAttribute header = param.GetCustomAttribute<RequestHeaderAttribute>();
-                // request header
-                if(header != null)
-                {
-                    throw new NotSupportedException("Request Headers are not supported yet.");
-                    continue;
-                }
-
-                RequestParameterAttribute reqParam = param.GetCustomAttribute<RequestParameterAttribute>();
-                // request parameter
-                if(reqParam != null)
-                {
-                    string paramName = reqParam.Parameter ?? param.Name;
-                    throw new NotSupportedException("Request Parameters are not supported yet.");
-                    continue;
-                }
-            }
-
-            throw new NotImplementedException("We haven't generated the method yet.  Sorry.");
+            syntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(classBuilder.ToString()));
         }
 
         public object Generate()
@@ -131,8 +105,8 @@ namespace DHaven.Faux.Compiler
             }
 
             var type = servicesAssembly.GetType(newClassName);
-            var constructor = type.GetConstructor(new Type[0]);
-            return constructor.Invoke(new object[0]);
+            var constructor = type.GetConstructor(new[] { typeof(IDiscoveryClient) });
+            return constructor.Invoke(new[] { new DiscoveryClientFactory(new DiscoveryOptions()).CreateClient() });
         }
 
         private static void Compile()
