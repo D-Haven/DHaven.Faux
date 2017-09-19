@@ -25,7 +25,7 @@ using System.Dynamic;
 
 namespace DHaven.Faux.Compiler
 {
-    public class DiscoveryAwareBase : DynamicObject, IDynamicMetaObjectProvider
+    public class DiscoveryAwareBase
     {
         private readonly Uri baseUri;
         private readonly DiscoveryHttpClientHandler handler;
@@ -36,36 +36,48 @@ namespace DHaven.Faux.Compiler
             handler = new DiscoveryHttpClientHandler(client);
         }
 
-        public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
+        protected HttpRequestMessage CreateRequest(HttpMethod method, string endpoint)
         {
-            throw new Exception("Just checkin'");
-            return base.TryInvoke(binder, args, out result);
+            return new HttpRequestMessage(method, GetServiceUri(endpoint));
         }
 
-        protected async Task<TResponse> SendAsJsonAsync<TResponse>(HttpMethod method, string endPoint, object data)
+        protected HttpResponseMessage Invoke(HttpRequestMessage message)
+        {
+            return InvokeAsync(message).Result;
+        }
+
+        protected async Task<HttpResponseMessage> InvokeAsync(HttpRequestMessage message)
         {
             using (var client = GetClient())
             {
-                var requestMessage = new HttpRequestMessage(method, GetServiceUri(endPoint));
+                var response = await client.SendAsync(message);
 
-                if (data != null)
-                {
-                    var json = JsonConvert.SerializeObject(data);
-                    requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
-                }
-
-                var responseMessage = await client.SendAsync(requestMessage);
-
-                if (!responseMessage.IsSuccessStatusCode)
+                if (!response.IsSuccessStatusCode)
                 {
                     throw new HttpRequestException(
-                        $"Unsuccessful response status: {responseMessage.StatusCode} {responseMessage.ReasonPhrase}");
+                        $"Unsuccessful response status: {response.StatusCode} {response.ReasonPhrase}");
                 }
 
-                return responseMessage.StatusCode == HttpStatusCode.NoContent
-                    ? default(TResponse)
-                    : JsonConvert.DeserializeObject<TResponse>(await responseMessage.Content.ReadAsStringAsync());
+                return response;
             }
+        }
+
+        protected StringContent ConvertToJson(object data)
+        {
+            var json = JsonConvert.SerializeObject(data);
+            return  new StringContent(json, Encoding.UTF8, "application/json");
+        }
+
+        protected TResponse ConvertToObject<TResponse>(HttpResponseMessage responseMessage)
+        {
+            return ConvertToObjectAsync<TResponse>(responseMessage).Result;
+        }
+
+        protected async Task<TResponse> ConvertToObjectAsync<TResponse>(HttpResponseMessage responseMessage)
+        {
+            return responseMessage.StatusCode == HttpStatusCode.NoContent
+                ? default(TResponse)
+                : JsonConvert.DeserializeObject<TResponse>(await responseMessage.Content.ReadAsStringAsync());
         }
 
         private Uri GetServiceUri(string endPoint)

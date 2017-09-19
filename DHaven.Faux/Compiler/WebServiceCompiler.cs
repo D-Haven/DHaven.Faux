@@ -27,6 +27,8 @@ using Microsoft.CodeAnalysis.CSharp;
 using TypeInfo = System.Reflection.TypeInfo;
 using System.Dynamic;
 using Steeltoe.Discovery.Client;
+using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace DHaven.Faux.Compiler
 {
@@ -41,13 +43,14 @@ namespace DHaven.Faux.Compiler
         {
             typeof(DiscoveryAwareBase).GetTypeInfo().Assembly.Location,
             typeof(DynamicObject).GetTypeInfo().Assembly.Location,
-            typeof(IDiscoveryClient).GetTypeInfo().Assembly.Location
+            typeof(IDiscoveryClient).GetTypeInfo().Assembly.Location,
+            typeof(HttpMethod).GetTypeInfo().Assembly.Location
         };
 
         protected WebServiceComplier(TypeInfo type)
         {
             typeInfo = type;
-            newClassName = $"{RootNamespace}.{typeInfo.Name}";
+            newClassName = $"{RootNamespace}.{typeInfo.FullName.Replace(".", string.Empty)}";
             UpdateReferences(typeInfo.Assembly);
             Define();
         }
@@ -90,6 +93,12 @@ namespace DHaven.Faux.Compiler
             classBuilder.AppendLine("    {");
             classBuilder.AppendLine($"        public {className}(Steeltoe.Discovery.Client.IDiscoveryClient client)");
             classBuilder.AppendLine($"            : base(client, \"{serviceName}\", \"{baseRoute}\") {{ }}");
+
+            foreach(var method in typeInfo.GetMethods())
+            {
+                BuildMethod(classBuilder, method);
+            }
+
             classBuilder.AppendLine("    }");
             classBuilder.AppendLine("}");
 
@@ -107,6 +116,87 @@ namespace DHaven.Faux.Compiler
             var type = servicesAssembly.GetType(newClassName);
             var constructor = type.GetConstructor(new[] { typeof(IDiscoveryClient) });
             return constructor.Invoke(new[] { new DiscoveryClientFactory(new DiscoveryOptions()).CreateClient() });
+        }
+
+        private void BuildMethod(StringBuilder classBuilder, MethodInfo method)
+        {
+            bool isAsyncCall = typeof(Task).IsAssignableFrom(method.ReturnType);
+            Type returnType = method.ReturnType;
+
+            if(isAsyncCall && method.ReturnType.IsConstructedGenericType)
+            {
+                returnType = method.ReturnType.GetGenericArguments()[0];
+            }
+
+            bool isVoid = returnType == typeof(void);
+
+            // Write the method declaration
+
+            classBuilder.Append("        public ");
+            if (isAsyncCall)
+            {
+                classBuilder.Append("async ");
+                classBuilder.Append(typeof(Task).FullName);
+
+                if(!isVoid)
+                {
+                    classBuilder.Append($"<{ToCompilableName(returnType)}>");
+                }
+            }
+            else
+            {
+                classBuilder.Append(isVoid ? "void" : ToCompilableName(returnType));
+            }
+
+            HttpMethodAttribute attribute = method.GetCustomAttribute<HttpMethodAttribute>();
+
+            classBuilder.Append($" {method.Name}(");
+            classBuilder.Append(string.Join(", ", method.GetParameters().Select(p => $"{ToCompilableName(p.ParameterType)} {p.Name}")));
+            classBuilder.AppendLine(")");
+            classBuilder.AppendLine("        {");
+            classBuilder.AppendLine($"            var request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\");");
+
+            if (isAsyncCall)
+            {
+                classBuilder.AppendLine("            var response = await InvokeAsync(request);");
+            }
+            else
+            {
+                classBuilder.AppendLine("            var response = Invoke(request);");
+            }
+
+            if (!isVoid)
+            {
+                if(isAsyncCall)
+                {
+                    classBuilder.AppendLine($"            return await ConvertToObjectAsync<{ToCompilableName(method.ReturnType)}>(response);");
+                }
+                else
+                {
+                    classBuilder.AppendLine($"            return ConvertToObject<{ToCompilableName(method.ReturnType)}>(response);");
+                }
+            }
+
+            classBuilder.AppendLine("        }");
+        }
+
+        private static string ToCompilableName(HttpMethod method)
+        {
+            string value = method.Method.First() + method.Method.Substring(1).ToLower();
+            return $"System.Net.Http.HttpMethod.{value}";
+        }
+
+        private static string ToCompilableName(Type type)
+        {
+            string baseName = type.FullName;
+
+            if (type.IsConstructedGenericType)
+            {
+                baseName = baseName.Substring(0, baseName.IndexOf('`'));
+                return $"{baseName}<{string.Join(",", type.GetGenericArguments().Select(ToCompilableName))}>";
+            }
+
+            return baseName;
         }
 
         private static void Compile()
