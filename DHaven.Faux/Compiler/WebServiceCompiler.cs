@@ -29,6 +29,7 @@ using System.Dynamic;
 using Steeltoe.Discovery.Client;
 using System.Threading.Tasks;
 using System.Net.Http;
+using Microsoft.Extensions.Configuration;
 
 namespace DHaven.Faux.Compiler
 {
@@ -39,6 +40,8 @@ namespace DHaven.Faux.Compiler
         private readonly string newClassName;
         private static Assembly servicesAssembly;
         private static readonly List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
+        private static DiscoveryClientFactory discoveryClient;
+
         private static readonly ISet<string> References = new HashSet<string>
         {
             typeof(DiscoveryAwareBase).GetTypeInfo().Assembly.Location,
@@ -115,7 +118,17 @@ namespace DHaven.Faux.Compiler
 
             var type = servicesAssembly.GetType(newClassName);
             var constructor = type.GetConstructor(new[] { typeof(IDiscoveryClient) });
-            return constructor.Invoke(new[] { new DiscoveryClientFactory(new DiscoveryOptions()).CreateClient() });
+            return constructor.Invoke(new[] { GetOrCreateDiscoveryClient() });
+        }
+
+        private IDiscoveryClient GetOrCreateDiscoveryClient()
+        {
+            var builder = new ConfigurationBuilder()/*
+               .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+               .AddEnvironmentVariables()*/;
+
+            var factory = new DiscoveryClientFactory(new DiscoveryOptions(builder.Build()));
+            return factory.CreateClient() as IDiscoveryClient;
         }
 
         private void BuildMethod(StringBuilder classBuilder, MethodInfo method)

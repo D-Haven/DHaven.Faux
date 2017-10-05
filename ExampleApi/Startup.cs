@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Steeltoe.Discovery.Client;
 
 namespace ExampleApi
 {
     public class Startup
     {
+
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -28,6 +26,7 @@ namespace ExampleApi
         public void ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
+            services.AddDiscoveryClient(Configuration);
             services.AddMvc();
         }
 
@@ -38,6 +37,7 @@ namespace ExampleApi
             loggerFactory.AddDebug();
 
             app.UseMvc();
+            app.UseDiscoveryClient();
         }
     }
 }
