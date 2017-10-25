@@ -40,7 +40,6 @@ namespace DHaven.Faux.Compiler
         private readonly string newClassName;
         private static Assembly servicesAssembly;
         private static readonly List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
-        private static DiscoveryClientFactory discoveryClient;
 
         private static readonly ISet<string> References = new HashSet<string>
         {
@@ -123,9 +122,10 @@ namespace DHaven.Faux.Compiler
 
         private IDiscoveryClient GetOrCreateDiscoveryClient()
         {
-            var builder = new ConfigurationBuilder()/*
+            var builder = new ConfigurationBuilder()
+               .SetBasePath(Directory.GetCurrentDirectory())
                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-               .AddEnvironmentVariables()*/;
+               .AddEnvironmentVariables();
 
             var factory = new DiscoveryClientFactory(new DiscoveryOptions(builder.Build()));
             return factory.CreateClient() as IDiscoveryClient;
