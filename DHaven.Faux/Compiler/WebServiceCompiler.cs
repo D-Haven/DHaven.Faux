@@ -25,7 +25,6 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using TypeInfo = System.Reflection.TypeInfo;
-using System.Dynamic;
 using Steeltoe.Discovery.Client;
 using System.Threading.Tasks;
 using System.Net.Http;
@@ -41,18 +40,13 @@ namespace DHaven.Faux.Compiler
         private static Assembly servicesAssembly;
         private static readonly List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
 
-        private static readonly ISet<string> References = new HashSet<string>
-        {
-            typeof(DiscoveryAwareBase).GetTypeInfo().Assembly.Location,
-            typeof(DynamicObject).GetTypeInfo().Assembly.Location,
-            typeof(IDiscoveryClient).GetTypeInfo().Assembly.Location,
-            typeof(HttpMethod).GetTypeInfo().Assembly.Location
-        };
+        private static readonly ISet<string> References = new HashSet<string>();
 
         protected WebServiceComplier(TypeInfo type)
         {
             typeInfo = type;
             newClassName = $"{RootNamespace}.{typeInfo.FullName.Replace(".", string.Empty)}";
+            UpdateReferences(GetType().GetTypeInfo().Assembly);
             UpdateReferences(typeInfo.Assembly);
             Define();
         }

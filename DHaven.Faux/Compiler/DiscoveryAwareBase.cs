@@ -21,7 +21,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Steeltoe.Discovery.Client;
-using System.Dynamic;
 
 namespace DHaven.Faux.Compiler
 {
