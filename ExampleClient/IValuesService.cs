@@ -3,7 +3,7 @@ using DHaven.Faux;
 
 namespace ExampleClient
 {
-    [FauxClient("valueService")]
+    [FauxClient("localhost:53088")]
     [Route("api/values")]
     public interface IValuesService
     {

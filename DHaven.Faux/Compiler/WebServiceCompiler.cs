@@ -161,7 +161,20 @@ namespace DHaven.Faux.Compiler
             classBuilder.Append(string.Join(", ", method.GetParameters().Select(p => $"{ToCompilableName(p.ParameterType)} {p.Name}")));
             classBuilder.AppendLine(")");
             classBuilder.AppendLine("        {");
-            classBuilder.AppendLine($"            var request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\");");
+            classBuilder.AppendLine("            var pathVariables = new System.Collections.Generic.Dictionary<string,object>();");
+
+            foreach(var parameter in method.GetParameters())
+            {
+                var pathValue = parameter.GetCustomAttribute<PathValueAttribute>();
+
+                if (pathValue != null)
+                {
+                    var key = string.IsNullOrEmpty(pathValue.Variable) ? parameter.Name : pathValue.Variable;
+                    classBuilder.AppendLine($"            pathVariables.Add(\"{key}\", {parameter.Name});");
+                }
+            }
+
+            classBuilder.AppendLine($"            var request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\", pathVariables);");
 
             if (isAsyncCall)
             {

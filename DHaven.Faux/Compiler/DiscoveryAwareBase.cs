@@ -21,6 +21,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Steeltoe.Discovery.Client;
+using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace DHaven.Faux.Compiler
 {
@@ -31,13 +33,14 @@ namespace DHaven.Faux.Compiler
 
         public DiscoveryAwareBase(IDiscoveryClient client, string serviceName, string baseRoute)
         {
-            baseUri = new Uri($"http://{serviceName}/{baseRoute}");
+            baseUri = new Uri($"http://{serviceName}/{baseRoute}/");
             handler = new DiscoveryHttpClientHandler(client);
         }
 
-        protected HttpRequestMessage CreateRequest(HttpMethod method, string endpoint)
+        protected HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, IDictionary<string,object> pathVariables)
         {
-            return new HttpRequestMessage(method, GetServiceUri(endpoint));
+            Uri serviceUri = GetServiceUri(endpoint, pathVariables);
+            return new HttpRequestMessage(method, serviceUri);
         }
 
         protected HttpResponseMessage Invoke(HttpRequestMessage message)
@@ -54,7 +57,7 @@ namespace DHaven.Faux.Compiler
                 if (!response.IsSuccessStatusCode)
                 {
                     throw new HttpRequestException(
-                        $"Unsuccessful response status: {response.StatusCode} {response.ReasonPhrase}");
+                        $"{message.Method} {message.RequestUri} {response.StatusCode} {response.ReasonPhrase}");
                 }
 
                 return response;
@@ -79,8 +82,13 @@ namespace DHaven.Faux.Compiler
                 : JsonConvert.DeserializeObject<TResponse>(await responseMessage.Content.ReadAsStringAsync());
         }
 
-        private Uri GetServiceUri(string endPoint)
+        private Uri GetServiceUri(string endPoint, IDictionary<string, object> pathVariables)
         {
+            foreach(var entry in pathVariables)
+            {
+                endPoint = endPoint.Replace($"{{{entry.Key}}}", entry.Value.ToString());
+            }
+
             return new Uri(baseUri, endPoint);
         }
 
