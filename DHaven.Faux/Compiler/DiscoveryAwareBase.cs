@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
+using System.Diagnostics;
 
 namespace DHaven.Faux.Compiler
 {
@@ -37,6 +38,7 @@ namespace DHaven.Faux.Compiler
         protected HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, IDictionary<string,object> pathVariables)
         {
             Uri serviceUri = GetServiceUri(endpoint, pathVariables);
+            Debug.WriteLine("Request: " + serviceUri.ToString());
             return new HttpRequestMessage(method, serviceUri);
         }
 
