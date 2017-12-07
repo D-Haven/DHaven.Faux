@@ -87,8 +87,8 @@ namespace DHaven.Faux.Compiler
             classBuilder.AppendLine("{");
             classBuilder.AppendLine($"    public class {className} : DHaven.Faux.Compiler.DiscoveryAwareBase, {typeInfo.FullName}");
             classBuilder.AppendLine("    {");
-            classBuilder.AppendLine($"        public {className}(Steeltoe.Discovery.Client.IDiscoveryClient client)");
-            classBuilder.AppendLine($"            : base(client, \"{serviceName}\", \"{baseRoute}\") {{ }}");
+            classBuilder.AppendLine($"        public {className}()");
+            classBuilder.AppendLine($"            : base(\"{serviceName}\", \"{baseRoute}\") {{ }}");
 
             foreach(var method in typeInfo.GetMethods())
             {
@@ -110,19 +110,8 @@ namespace DHaven.Faux.Compiler
             }
 
             var type = servicesAssembly.GetType(newClassName);
-            var constructor = type.GetConstructor(new[] { typeof(IDiscoveryClient) });
-            return constructor.Invoke(new[] { GetOrCreateDiscoveryClient() });
-        }
-
-        private IDiscoveryClient GetOrCreateDiscoveryClient()
-        {
-            var builder = new ConfigurationBuilder()
-               .SetBasePath(Directory.GetCurrentDirectory())
-               .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-               .AddEnvironmentVariables();
-
-            var factory = new DiscoveryClientFactory(new DiscoveryOptions(builder.Build()));
-            return factory.CreateClient() as IDiscoveryClient;
+            var constructor = type.GetConstructor(new Type[0]);
+            return constructor.Invoke(new object[0]);
         }
 
         private void BuildMethod(StringBuilder classBuilder, MethodInfo method)
@@ -161,7 +150,7 @@ namespace DHaven.Faux.Compiler
             classBuilder.Append(string.Join(", ", method.GetParameters().Select(p => $"{ToCompilableName(p.ParameterType)} {p.Name}")));
             classBuilder.AppendLine(")");
             classBuilder.AppendLine("        {");
-            classBuilder.AppendLine("            var pathVariables = new System.Collections.Generic.Dictionary<string,object>();");
+            classBuilder.AppendLine("            var variables = new System.Collections.Generic.Dictionary<string,object>();");
 
             foreach(var parameter in method.GetParameters())
             {
@@ -170,11 +159,11 @@ namespace DHaven.Faux.Compiler
                 if (pathValue != null)
                 {
                     var key = string.IsNullOrEmpty(pathValue.Variable) ? parameter.Name : pathValue.Variable;
-                    classBuilder.AppendLine($"            pathVariables.Add(\"{key}\", {parameter.Name});");
+                    classBuilder.AppendLine($"            variables.Add(\"{key}\", {parameter.Name});");
                 }
             }
 
-            classBuilder.AppendLine($"            var request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\", pathVariables);");
+            classBuilder.AppendLine($"            var request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\", variables);");
 
             if (isAsyncCall)
             {

@@ -20,21 +20,18 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Steeltoe.Discovery.Client;
-using System.Diagnostics;
 using System.Collections.Generic;
+using System.IO;
 
 namespace DHaven.Faux.Compiler
 {
     public class DiscoveryAwareBase
     {
         private readonly Uri baseUri;
-        private readonly DiscoveryHttpClientHandler handler;
 
-        public DiscoveryAwareBase(IDiscoveryClient client, string serviceName, string baseRoute)
+        public DiscoveryAwareBase(string serviceName, string baseRoute)
         {
             baseUri = new Uri($"http://{serviceName}/{baseRoute}/");
-            handler = new DiscoveryHttpClientHandler(client);
         }
 
         protected HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, IDictionary<string,object> pathVariables)
@@ -50,18 +47,15 @@ namespace DHaven.Faux.Compiler
 
         protected async Task<HttpResponseMessage> InvokeAsync(HttpRequestMessage message)
         {
-            using (var client = GetClient())
+            var response = await DiscoverySupport.Client.SendAsync(message);
+
+            if (!response.IsSuccessStatusCode)
             {
-                var response = await client.SendAsync(message);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new HttpRequestException(
-                        $"{message.Method} {message.RequestUri} {response.StatusCode} {response.ReasonPhrase}");
-                }
-
-                return response;
+                throw new HttpRequestException(
+                    $"{message.Method} {message.RequestUri} {response.StatusCode} {response.ReasonPhrase}");
             }
+
+            return response;
         }
 
         protected StringContent ConvertToJson(object data)
@@ -77,24 +71,25 @@ namespace DHaven.Faux.Compiler
 
         protected async Task<TResponse> ConvertToObjectAsync<TResponse>(HttpResponseMessage responseMessage)
         {
-            return responseMessage.StatusCode == HttpStatusCode.NoContent
-                ? default(TResponse)
-                : JsonConvert.DeserializeObject<TResponse>(await responseMessage.Content.ReadAsStringAsync());
+            if(responseMessage.StatusCode == HttpStatusCode.NoContent)
+            {
+                return default(TResponse);
+            }
+
+            using(var reader = new StreamReader(await responseMessage.Content.ReadAsStreamAsync()))
+            {
+                return JsonConvert.DeserializeObject<TResponse>(await reader.ReadToEndAsync());
+            }
         }
 
-        private Uri GetServiceUri(string endPoint, IDictionary<string, object> pathVariables)
+        private Uri GetServiceUri(string endPoint, IDictionary<string, object> variables)
         {
-            foreach(var entry in pathVariables)
+            foreach(var entry in variables)
             {
                 endPoint = endPoint.Replace($"{{{entry.Key}}}", entry.Value.ToString());
             }
 
             return new Uri(baseUri, endPoint);
-        }
-
-        private HttpClient GetClient()
-        {
-            return new HttpClient(handler, false);
         }
     }
 }
