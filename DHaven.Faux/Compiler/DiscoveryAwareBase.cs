@@ -17,64 +17,81 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Steeltoe.Discovery.Client;
+using System.Collections.Generic;
+using System.IO;
+using System.Diagnostics;
 
 namespace DHaven.Faux.Compiler
 {
     public class DiscoveryAwareBase
     {
-        private readonly Uri baseUri = new Uri("http://serviceName/api/base");
-        private readonly DiscoveryHttpClientHandler handler;
+        private readonly Uri baseUri;
 
-        public DiscoveryAwareBase(IDiscoveryClient client)
+        public DiscoveryAwareBase(string serviceName, string baseRoute)
         {
-            handler = new DiscoveryHttpClientHandler(client);
+            baseUri = new Uri($"http://{serviceName}/{baseRoute}/");
         }
 
-        protected async Task<TResponse> SendAsJsonAsync<TRequest, TResponse>(
-            HttpMethod method, string endPoint, TRequest data)
+        protected HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, IDictionary<string,object> pathVariables)
         {
-            using (var client = GetClient())
+            Uri serviceUri = GetServiceUri(endpoint, pathVariables);
+            Debug.WriteLine("Request: " + serviceUri.ToString());
+            return new HttpRequestMessage(method, serviceUri);
+        }
+
+        protected HttpResponseMessage Invoke(HttpRequestMessage message)
+        {
+            return InvokeAsync(message).Result;
+        }
+
+        protected async Task<HttpResponseMessage> InvokeAsync(HttpRequestMessage message)
+        {
+            var response = await DiscoverySupport.Client.SendAsync(message);
+
+            if (!response.IsSuccessStatusCode)
             {
-                var requestMessage = new HttpRequestMessage(method, GetServiceUri(endPoint));
-
-                if (data != null)
-                {
-                    var json = JsonConvert.SerializeObject(data);
-                    requestMessage.Content = new StringContent(json, Encoding.UTF8, "application/json");
-                }
-
-                var responseMessage = await client.SendAsync(requestMessage);
-
-                if (responseMessage.IsSuccessStatusCode)
-                {
-                    switch (responseMessage.StatusCode)
-                    {
-                        case HttpStatusCode.NoContent:
-                            return default(TResponse);
-
-                        default:
-                            return JsonConvert.DeserializeObject<TResponse>(await responseMessage.Content.ReadAsStringAsync());
-                    }
-                }
-
                 throw new HttpRequestException(
-                    $"Unsuccessful response status: {responseMessage.StatusCode} {responseMessage.ReasonPhrase}");
+                    $"{message.Method} {message.RequestUri} {response.StatusCode} {response.ReasonPhrase}");
+            }
+
+            return response;
+        }
+
+        protected StringContent ConvertToJson(object data)
+        {
+            var json = JsonConvert.SerializeObject(data);
+            return  new StringContent(json, Encoding.UTF8, "application/json");
+        }
+
+        protected TResponse ConvertToObject<TResponse>(HttpResponseMessage responseMessage)
+        {
+            return ConvertToObjectAsync<TResponse>(responseMessage).Result;
+        }
+
+        protected async Task<TResponse> ConvertToObjectAsync<TResponse>(HttpResponseMessage responseMessage)
+        {
+            if(responseMessage.StatusCode == HttpStatusCode.NoContent)
+            {
+                return default(TResponse);
+            }
+
+            using(var reader = new StreamReader(await responseMessage.Content.ReadAsStreamAsync()))
+            {
+                return JsonConvert.DeserializeObject<TResponse>(await reader.ReadToEndAsync());
             }
         }
 
-        private Uri GetServiceUri(string endPoint)
+        private Uri GetServiceUri(string endPoint, IDictionary<string, object> variables)
         {
-            return new Uri(baseUri, endPoint);
-        }
+            foreach(var entry in variables)
+            {
+                endPoint = endPoint.Replace($"{{{entry.Key}}}", entry.Value.ToString());
+            }
 
-        private HttpClient GetClient()
-        {
-            return new HttpClient(handler, false);
+            return new Uri(baseUri, endPoint);
         }
     }
 }
