@@ -26,16 +26,16 @@ using System.Threading.Tasks;
 
 namespace Fortune_Teller_UI.Services
 {
-    [ServiceName("fortuneService")]
+    [FauxClient("fortuneService")]
     [Route("api/fortunes")]
     public interface IFortuneService
     {
-	// GET api/fortunes
-	[HttpGet]
+	    // GET api/fortunes
+	    [HttpGet]
         Task<IEnumerable<Fortune>> Get();
 
-	// GET api/fortunes/random
-	[HttpGet("random")]
+	    // GET api/fortunes/random
+	    [HttpGet("random")]
         public Fortune Random();
     }
 }
@@ -47,5 +47,10 @@ a standard CSharp object.  (Appologies to Steeltoe, I adapted their starter exam
 
 == What does DHaven.Faux do right now?
 
-Not much.  As of 6/22/2017 I just started the project.
-As of the last update I can generate the class implementations for simple web services, but plenty of work to be done.  Attempting to figure out Steeltoe Service Discovery so that I can use Eureka to resolve the URL.  This the part I'm stuck on right now.
+It can generate simple APIs for JSon bound REST services (like the example above),
+and use a Eureka discovery server to look up the real location of the web service
+for you.  It's also smart enough to use the async ready typed Task response values.
+Basically the interface in the above example is fully supported.
+
+NOTE: it is important that the objects you use in your interface are objects that
+NewtonSoft.JSon knows how to serialize. 

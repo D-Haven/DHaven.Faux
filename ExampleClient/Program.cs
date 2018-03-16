@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using DHaven.Faux;
 
 namespace ExampleClient
@@ -11,8 +12,7 @@ namespace ExampleClient
 
             try
             {
-                Console.Out.WriteLine($"Get All Values: {string.Join(",", wrapper.Service.Get())}");
-                Console.Out.WriteLine($"Get 1: {wrapper.Service.Get(1)}");
+                Task.Run(()=>RunExample(wrapper.Service)).Wait();
             }
             catch (Exception ex)
             {
@@ -20,6 +20,12 @@ namespace ExampleClient
             }
 
             Console.In.Read();
+        }
+
+        static async Task RunExample(IValuesService valueService)
+        {
+            Console.Out.WriteLine($"Get All Values: {string.Join(",", await valueService.Get())}");
+            Console.Out.WriteLine($"Get 1: {await valueService.Get(1)}");
         }
     }
 }

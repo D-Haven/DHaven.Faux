@@ -178,11 +178,11 @@ namespace DHaven.Faux.Compiler
             {
                 if(isAsyncCall)
                 {
-                    classBuilder.AppendLine($"            return await ConvertToObjectAsync<{ToCompilableName(method.ReturnType)}>(response);");
+                    classBuilder.AppendLine($"            return await ConvertToObjectAsync<{ToCompilableName(returnType)}>(response);");
                 }
                 else
                 {
-                    classBuilder.AppendLine($"            return ConvertToObject<{ToCompilableName(method.ReturnType)}>(response);");
+                    classBuilder.AppendLine($"            return ConvertToObject<{ToCompilableName(returnType)}>(response);");
                 }
             }
 

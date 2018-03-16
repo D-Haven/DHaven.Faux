@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using DHaven.Faux;
 
 namespace ExampleClient
@@ -8,10 +9,10 @@ namespace ExampleClient
     public interface IValuesService
     {
         [HttpGet]
-        IEnumerable<string> Get();
+        Task<IEnumerable<string>> Get();
 
         [HttpGet("{id}")]
-        string Get([PathValue] int id);
+        Task<string> Get([PathValue] int id);
 
         [HttpPost]
         void Post([Body] string value);
