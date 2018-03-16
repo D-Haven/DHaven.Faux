@@ -47,5 +47,5 @@ a standard CSharp object.  (Appologies to Steeltoe, I adapted their starter exam
 
 == What does DHaven.Faux do right now?
 
-Not much.  As of 6/22/2017 I just started the project.  Hopefully I'll remember to update
-this page...
+Not much.  As of 6/22/2017 I just started the project.
+As of the last update I can generate the class implementations for simple web services, but plenty of work to be done.  Attempting to figure out Steeltoe Service Discovery so that I can use Eureka to resolve the URL.  This the part I'm stuck on right now.
