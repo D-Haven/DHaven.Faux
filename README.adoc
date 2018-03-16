@@ -1,5 +1,7 @@
 = DHaven.Faux
 
+image:https://badges.gitter.im/DHaven-Faux/Lobby.svg[link="https://gitter.im/DHaven-Faux/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"]
+
 NetFlix created a bunch of really useful cloud projects, all of which are Java based.
 Steeltoe OSS has made service discovery and a few other integrations available to the
 Dotnet community.  One glaring missing feature is an analog for Feign.  This library
@@ -24,16 +26,16 @@ using System.Threading.Tasks;
 
 namespace Fortune_Teller_UI.Services
 {
-    [ServiceName("fortuneService")]
+    [FauxClient("fortuneService")]
     [Route("api/fortunes")]
     public interface IFortuneService
     {
-	// GET api/fortunes
-	[HttpGet]
+	    // GET api/fortunes
+	    [HttpGet]
         Task<IEnumerable<Fortune>> Get();
 
-	// GET api/fortunes/random
-	[HttpGet("random")]
+	    // GET api/fortunes/random
+	    [HttpGet("random")]
         public Fortune Random();
     }
 }
@@ -45,5 +47,10 @@ a standard CSharp object.  (Appologies to Steeltoe, I adapted their starter exam
 
 == What does DHaven.Faux do right now?
 
-Not much.  As of 6/22/2017 I just started the project.  Hopefully I'll remember to update
-this page...
+It can generate simple APIs for JSon bound REST services (like the example above),
+and use a Eureka discovery server to look up the real location of the web service
+for you.  It's also smart enough to use the async ready typed Task response values.
+Basically the interface in the above example is fully supported.
+
+NOTE: it is important that the objects you use in your interface are objects that
+NewtonSoft.JSon knows how to serialize. 

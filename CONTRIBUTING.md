@@ -1,4 +1,8 @@
-﻿#region Copyright 2017 D-Haven.org
+Contributing to this project means that you agree to the terms of the Apache Software Foundation License 2.0,
+and that the copyright for the code belongs to this project.  Each source file needs the following header:
+
+````
+#region Copyright 2017 D-Haven.org
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,22 +17,10 @@
 // limitations under the License.
 
 #endregion
+````
 
-using DHaven.Faux.Compiler;
+We go with standard Microsoft conventions for just about everything, except we don't add that silly "_" character in front
+of member variables.
 
-namespace DHaven.Faux
-{
-    public class Faux<TService>
-        where TService : class // Really an interface
-    {
-        private TService service;
-        private readonly WebServiceCompiler<TService> compiler;
-
-        public Faux()
-        {
-            compiler = new WebServiceCompiler<TService>();
-        }
-
-        public TService Service => service ?? (service = compiler.Generate());
-    }
-}
+We use Git Flow, so if you are contributing a feature or bugfix, use the appropriate commands.
+See https://danielkummer.github.io/git-flow-cheatsheet/ for examples.

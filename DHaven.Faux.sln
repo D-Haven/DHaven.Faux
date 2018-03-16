@@ -11,6 +11,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.adoc = README.adoc
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExampleApi", "ExampleApi\ExampleApi.csproj", "{268BE497-8781-4F1D-809B-742CF659F759}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExampleClient", "ExampleClient\ExampleClient.csproj", "{0E280DD0-DAEC-4B89-814B-ED21BB933067}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{61C35143-51F7-4B69-A582-111A9598147A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{61C35143-51F7-4B69-A582-111A9598147A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{61C35143-51F7-4B69-A582-111A9598147A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{268BE497-8781-4F1D-809B-742CF659F759}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{268BE497-8781-4F1D-809B-742CF659F759}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{268BE497-8781-4F1D-809B-742CF659F759}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{268BE497-8781-4F1D-809B-742CF659F759}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E280DD0-DAEC-4B89-814B-ED21BB933067}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E280DD0-DAEC-4B89-814B-ED21BB933067}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E280DD0-DAEC-4B89-814B-ED21BB933067}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E280DD0-DAEC-4B89-814B-ED21BB933067}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
