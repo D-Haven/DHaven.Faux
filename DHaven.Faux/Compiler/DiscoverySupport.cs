@@ -20,12 +20,13 @@ namespace DHaven.Faux.Compiler
                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                .AddEnvironmentVariables();
 
-            var configuration = builder.Build();
+            Configuration = builder.Build();
 
             var logFactory = new LoggerFactory();
             logFactory.AddDebug(LogLevel.Trace);
+            Logger = logFactory.CreateLogger<WebServiceComplier>();
 
-            var factory = new DiscoveryClientFactory(new DiscoveryOptions(configuration));
+            var factory = new DiscoveryClientFactory(new DiscoveryOptions(Configuration));
 
             DiscoveryHttpClientHandler handler = new DiscoveryHttpClientHandler(factory.CreateClient() as IDiscoveryClient, logFactory.CreateLogger<DiscoveryHttpClientHandler>());
             Client = new HttpClient(handler, false);
@@ -34,6 +35,10 @@ namespace DHaven.Faux.Compiler
                   .Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         }
+
+        internal static IConfiguration Configuration { get; }
+
+        internal static ILogger<WebServiceComplier> Logger { get; }
 
         internal static HttpClient Client { get; }
     }
