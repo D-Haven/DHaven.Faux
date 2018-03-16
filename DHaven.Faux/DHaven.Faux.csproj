@@ -10,6 +10,9 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.4.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.0.0" />
+    <PackageReference Include="microsoft.extensions.logging" Version="2.0.1" />
+    <PackageReference Include="microsoft.extensions.logging.configuration" Version="2.0.1" />
+    <PackageReference Include="microsoft.extensions.logging.debug" Version="2.0.1" />
     <PackageReference Include="newtonsoft.json" Version="10.0.3" />
     <PackageReference Include="steeltoe.discovery.client" Version="1.1.0" />
     <PackageReference Include="system.runtime.loader" Version="4.3.0" />

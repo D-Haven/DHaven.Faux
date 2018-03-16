@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Steeltoe.Discovery.Client;
 using System.IO;
 using System.Net.Http;
@@ -19,9 +20,14 @@ namespace DHaven.Faux.Compiler
                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                .AddEnvironmentVariables();
 
-            var factory = new DiscoveryClientFactory(new DiscoveryOptions(builder.Build()));
+            var configuration = builder.Build();
 
-            DiscoveryHttpClientHandler handler = new DiscoveryHttpClientHandler(factory.CreateClient() as IDiscoveryClient);
+            var logFactory = new LoggerFactory();
+            logFactory.AddDebug(LogLevel.Trace);
+
+            var factory = new DiscoveryClientFactory(new DiscoveryOptions(configuration));
+
+            DiscoveryHttpClientHandler handler = new DiscoveryHttpClientHandler(factory.CreateClient() as IDiscoveryClient, logFactory.CreateLogger<DiscoveryHttpClientHandler>());
             Client = new HttpClient(handler, false);
             Client.DefaultRequestHeaders
                   .Accept
