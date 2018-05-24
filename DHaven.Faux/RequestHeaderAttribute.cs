@@ -14,6 +14,6 @@ namespace DHaven.Faux
             Header = headerName;
         }
 
-        public string Header { get; private set; }
+        public string Header { get; }
     }
 }

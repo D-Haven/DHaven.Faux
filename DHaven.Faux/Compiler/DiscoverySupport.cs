@@ -28,7 +28,7 @@ namespace DHaven.Faux.Compiler
 
             var factory = new DiscoveryClientFactory(new DiscoveryOptions(Configuration));
 
-            DiscoveryHttpClientHandler handler = new DiscoveryHttpClientHandler(factory.CreateClient() as IDiscoveryClient, logFactory.CreateLogger<DiscoveryHttpClientHandler>());
+            var handler = new DiscoveryHttpClientHandler(factory.CreateClient() as IDiscoveryClient, logFactory.CreateLogger<DiscoveryHttpClientHandler>());
             Client = new HttpClient(handler, false);
             Client.DefaultRequestHeaders
                   .Accept
