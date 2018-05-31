@@ -37,8 +37,8 @@ namespace DHaven.Faux.Compiler
 
         protected HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, IDictionary<string,object> pathVariables)
         {
-            Uri serviceUri = GetServiceUri(endpoint, pathVariables);
-            Debug.WriteLine("Request: " + serviceUri.ToString());
+            var serviceUri = GetServiceUri(endpoint, pathVariables);
+            Debug.WriteLine($"Request: {serviceUri}");
             return new HttpRequestMessage(method, serviceUri);
         }
 

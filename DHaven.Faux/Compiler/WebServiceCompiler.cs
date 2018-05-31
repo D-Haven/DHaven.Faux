@@ -37,7 +37,7 @@ namespace DHaven.Faux.Compiler
         private readonly TypeInfo typeInfo;
         private readonly string newClassName;
         private static Assembly servicesAssembly;
-        private static readonly List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
+        private static readonly List<SyntaxTree> SyntaxTrees = new List<SyntaxTree>();
 
         private static readonly ISet<string> References = new HashSet<string>();
 
@@ -63,7 +63,7 @@ namespace DHaven.Faux.Compiler
         protected WebServiceComplier(TypeInfo type)
         {
             typeInfo = type;
-            newClassName = $"{RootNamespace}.{typeInfo.FullName.Replace(".", string.Empty)}";
+            newClassName = $"{RootNamespace}.{typeInfo.FullName?.Replace(".", string.Empty)}";
             UpdateReferences(GetType().GetTypeInfo().Assembly);
             UpdateReferences(typeInfo.Assembly);
             Define();
@@ -99,7 +99,7 @@ namespace DHaven.Faux.Compiler
                 throw new NotSupportedException($"Generic interfaces are not supported: {typeInfo.FullName}");
             }
 
-            var className = typeInfo.FullName.Replace(".", string.Empty);
+            var className = typeInfo.FullName?.Replace(".", string.Empty);
             var serviceName = typeInfo.GetCustomAttribute<FauxClientAttribute>().Name;
             var baseRoute = typeInfo.GetCustomAttribute<RouteAttribute>().BaseRoute;
 
@@ -135,7 +135,7 @@ namespace DHaven.Faux.Compiler
                 }
             }
 
-            syntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(sourceCode));
+            SyntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(sourceCode));
         }
 
         public object Generate()
@@ -148,7 +148,7 @@ namespace DHaven.Faux.Compiler
 
             var type = servicesAssembly.GetType(newClassName);
             var constructor = type.GetConstructor(new Type[0]);
-            return constructor.Invoke(new object[0]);
+            return constructor?.Invoke(new object[0]);
         }
 
         private void BuildMethod(StringBuilder classBuilder, MethodInfo method)
@@ -188,39 +188,36 @@ namespace DHaven.Faux.Compiler
             classBuilder.AppendLine(")");
             classBuilder.AppendLine("        {");
             classBuilder.AppendLine("            var variables = new System.Collections.Generic.Dictionary<string,object>();");
+            classBuilder.AppendLine($"            var request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\", variables);");
 
-            foreach(var parameter in method.GetParameters())
+            var contentHeaders = new Dictionary<string, string>();
+
+            foreach (var parameter in method.GetParameters())
             {
-                var pathValue = parameter.GetCustomAttribute<PathValueAttribute>();
+                AttributeInterpreter.InterpretPathValue(parameter, classBuilder);
 
-                if (pathValue != null)
+                var contentHeader = AttributeInterpreter.InterpretRequestHeader(parameter, classBuilder);
+                if (contentHeader != null)
                 {
-                    var key = string.IsNullOrEmpty(pathValue.Variable) ? parameter.Name : pathValue.Variable;
-                    classBuilder.AppendLine($"            variables.Add(\"{key}\", {parameter.Name});");
+                    contentHeaders.Add(contentHeader, parameter.Name);
                 }
             }
 
-            classBuilder.AppendLine($"            var request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\", variables);");
+            // when setting content we can apply the contentHeaders
+            foreach (var entry in contentHeaders)
+            {
+                classBuilder.AppendLine($"            content.Headers.Add(\"{entry.Key}\", {entry.Value});");
+            }
 
-            if (isAsyncCall)
-            {
-                classBuilder.AppendLine("            var response = await InvokeAsync(request);");
-            }
-            else
-            {
-                classBuilder.AppendLine("            var response = Invoke(request);");
-            }
+            classBuilder.AppendLine(isAsyncCall
+                ? "            var response = await InvokeAsync(request);"
+                : "            var response = Invoke(request);");
 
             if (!isVoid)
             {
-                if(isAsyncCall)
-                {
-                    classBuilder.AppendLine($"            return await ConvertToObjectAsync<{ToCompilableName(returnType)}>(response);");
-                }
-                else
-                {
-                    classBuilder.AppendLine($"            return ConvertToObject<{ToCompilableName(returnType)}>(response);");
-                }
+                classBuilder.AppendLine(isAsyncCall
+                    ? $"            return await ConvertToObjectAsync<{ToCompilableName(returnType)}>(response);"
+                    : $"            return ConvertToObject<{ToCompilableName(returnType)}>(response);");
             }
 
             classBuilder.AppendLine("        }");
@@ -234,11 +231,11 @@ namespace DHaven.Faux.Compiler
 
         private static string ToCompilableName(Type type)
         {
-            string baseName = type.FullName;
+            var baseName = type.FullName;
 
             if (type.IsConstructedGenericType)
             {
-                baseName = baseName.Substring(0, baseName.IndexOf('`'));
+                baseName = baseName?.Substring(0, baseName.IndexOf('`'));
                 return $"{baseName}<{string.Join(",", type.GetGenericArguments().Select(ToCompilableName))}>";
             }
 
@@ -252,7 +249,7 @@ namespace DHaven.Faux.Compiler
             var compilation = CSharpCompilation.Create(assemblyName)
                 .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
                 .AddReferences(References.Select(location => MetadataReference.CreateFromFile(location)))
-                .AddSyntaxTrees(syntaxTrees);
+                .AddSyntaxTrees(SyntaxTrees);
 
             using (var stream = new MemoryStream())
             {
