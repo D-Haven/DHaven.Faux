@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Text;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace DHaven.Faux.Compiler
 {
@@ -23,25 +25,74 @@ namespace DHaven.Faux.Compiler
             if (pathValue != null)
             {
                 var key = string.IsNullOrEmpty(pathValue.Variable) ? parameter.Name : pathValue.Variable;
-                classBuilder.AppendLine($"            variables.Add(\"{key}\", {parameter.Name});");
+                classBuilder.AppendLine($"            仮variables.Add(\"{key}\", {parameter.Name});");
             }
         }
 
-        public static string InterpretRequestHeader(ParameterInfo parameter, StringBuilder classBuilder)
+        public static void InterpretRequestHeader(ParameterInfo parameter, Dictionary<string, ParameterInfo> requestHeaders, Dictionary<string, ParameterInfo> contentHeaders)
         {
             var requestHeader = parameter.GetCustomAttribute<RequestHeaderAttribute>();
 
-            if (requestHeader != null)
+            if (requestHeader == null)
             {
-                if (ContentHeaders.Contains(requestHeader.Header.ToLowerInvariant()))
-                {
-                    return requestHeader.Header;
-                }
-
-                classBuilder.AppendLine($"            request.Headers.Add(\"{requestHeader.Header}\", {parameter.Name}{(parameter.ParameterType.IsClass ? "?" : "")}.ToString());");
+                return;
             }
 
-            return null;
+            if (ContentHeaders.Contains(requestHeader.Header.ToLowerInvariant()))
+            {
+                contentHeaders.Add(requestHeader.Header, parameter);
+            }
+            else
+            {
+                requestHeaders.Add(requestHeader.Header, parameter);
+            }
+        }
+
+        public static void InterpretBodyParameter(ParameterInfo parameter, ref ParameterInfo bodyParam, ref BodyAttribute bodyAttr)
+        {
+            var attr = parameter.GetCustomAttribute<BodyAttribute>();
+
+            if (attr == null)
+            {
+                return;
+            }
+
+            if (bodyAttr != null)
+            {
+                throw new WebServiceCompileException("Cannot have more than one body parameter");
+            }
+
+            bodyAttr = attr;
+            bodyParam = parameter;
+        }
+
+        public static bool CreateContentObjectIfSpecified(BodyAttribute bodyAttr, ParameterInfo bodyParam, StringBuilder clasStringBuilder)
+        {
+            if (bodyAttr == null || bodyParam == null)
+            {
+                return false;
+            }
+
+            var format = bodyAttr.Format;
+
+            if (format == Format.Auto)
+            {
+                format = typeof(Stream).IsAssignableFrom(bodyParam.ParameterType) ? Format.Raw : Format.Json;
+            }
+
+            switch (format)
+            {
+                case Format.Json:
+                    clasStringBuilder.AppendLine($"            var 仮content = ConvertToJson({bodyParam.Name});");
+                    break;
+                case Format.Raw:
+                    clasStringBuilder.AppendLine($"            var 仮content = StreamRawContent({bodyParam.Name});");
+                    break;
+                default:
+                    return false;
+            }
+
+            return true;
         }
     }
 }

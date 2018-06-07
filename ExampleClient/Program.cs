@@ -33,7 +33,7 @@ namespace ExampleClient
 
         private static async Task RunBlob(IBlobService blobService)
         {
-            using (var content = typeof(Program).Assembly.GetManifestResourceStream("/coffee.jpg"))
+            using (var content = typeof(Program).Assembly.GetManifestResourceStream("ExampleClient.coffee.jpg"))
             {
                 var etag = await blobService.UploadAsync(content, 82825, "image/jpeg");
 

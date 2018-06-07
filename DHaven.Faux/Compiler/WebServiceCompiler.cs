@@ -187,37 +187,50 @@ namespace DHaven.Faux.Compiler
             classBuilder.Append(string.Join(", ", method.GetParameters().Select(p => $"{ToCompilableName(p.ParameterType)} {p.Name}")));
             classBuilder.AppendLine(")");
             classBuilder.AppendLine("        {");
-            classBuilder.AppendLine("            var variables = new System.Collections.Generic.Dictionary<string,object>();");
-            classBuilder.AppendLine($"            var request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\", variables);");
+            classBuilder.AppendLine("            var 仮variables = new System.Collections.Generic.Dictionary<string,object>();");
 
-            var contentHeaders = new Dictionary<string, string>();
+            var contentHeaders = new Dictionary<string, ParameterInfo>();
+            var requestHeaders = new Dictionary<string, ParameterInfo>();
+            ParameterInfo bodyParam = null;
+            BodyAttribute bodyAttr = null;
 
             foreach (var parameter in method.GetParameters())
             {
                 AttributeInterpreter.InterpretPathValue(parameter, classBuilder);
 
-                var contentHeader = AttributeInterpreter.InterpretRequestHeader(parameter, classBuilder);
-                if (contentHeader != null)
-                {
-                    contentHeaders.Add(contentHeader, parameter.Name);
-                }
+                AttributeInterpreter.InterpretRequestHeader(parameter, requestHeaders, contentHeaders);
+
+                AttributeInterpreter.InterpretBodyParameter(parameter, ref bodyParam, ref bodyAttr);
             }
 
-            // when setting content we can apply the contentHeaders
-            foreach (var entry in contentHeaders)
+            classBuilder.AppendLine($"            var 仮request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\", 仮variables);");
+            bool hasContent = AttributeInterpreter.CreateContentObjectIfSpecified(bodyAttr, bodyParam, classBuilder);
+
+            foreach (var entry in requestHeaders)
             {
-                classBuilder.AppendLine($"            content.Headers.Add(\"{entry.Key}\", {entry.Value});");
+                classBuilder.AppendLine($"            仮request.Headers.Add(\"{entry.Key}\", {entry.Value.Name}{(entry.Value.ParameterType.IsClass ? "?" : "")}.ToString());");
+            }
+
+            if (hasContent)
+            {
+                // when setting content we can apply the contentHeaders
+                foreach (var entry in contentHeaders)
+                {
+                    classBuilder.AppendLine($"            仮content.Headers.Add(\"{entry.Key}\", {entry.Value.Name}{(entry.Value.ParameterType.IsClass ? "?" : "")}.ToString());");
+                }
+
+                classBuilder.AppendLine("            仮request.Content = 仮content;");
             }
 
             classBuilder.AppendLine(isAsyncCall
-                ? "            var response = await InvokeAsync(request);"
-                : "            var response = Invoke(request);");
+                ? "            var 仮response = await InvokeAsync(仮request);"
+                : "            var 仮response = Invoke(仮request);");
 
             if (!isVoid)
             {
                 classBuilder.AppendLine(isAsyncCall
-                    ? $"            return await ConvertToObjectAsync<{ToCompilableName(returnType)}>(response);"
-                    : $"            return ConvertToObject<{ToCompilableName(returnType)}>(response);");
+                    ? $"            return await ConvertToObjectAsync<{ToCompilableName(returnType)}>(仮response);"
+                    : $"            return ConvertToObject<{ToCompilableName(returnType)}>(仮response);");
             }
 
             classBuilder.AppendLine("        }");
@@ -225,7 +238,7 @@ namespace DHaven.Faux.Compiler
 
         private static string ToCompilableName(HttpMethod method)
         {
-            string value = method.Method.First() + method.Method.Substring(1).ToLower();
+            var value = method.Method.First() + method.Method.Substring(1).ToLower();
             return $"System.Net.Http.HttpMethod.{value}";
         }
 

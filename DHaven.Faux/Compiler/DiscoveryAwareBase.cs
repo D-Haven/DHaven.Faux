@@ -66,6 +66,11 @@ namespace DHaven.Faux.Compiler
             return  new StringContent(json, Encoding.UTF8, "application/json");
         }
 
+        protected StreamContent StreamRawContent(Stream stream)
+        {
+            return new StreamContent(stream);
+        }
+
         protected TResponse ConvertToObject<TResponse>(HttpResponseMessage responseMessage)
         {
             return ConvertToObjectAsync<TResponse>(responseMessage).Result;

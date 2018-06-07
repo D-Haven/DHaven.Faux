@@ -14,6 +14,7 @@ namespace DHaven.Faux
 
     public enum Format
     {
+        Auto,
         Json,
         Raw
     }
