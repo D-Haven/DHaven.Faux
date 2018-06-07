@@ -54,3 +54,28 @@ Basically the interface in the above example is fully supported.
 
 NOTE: it is important that the objects you use in your interface are objects that
 NewtonSoft.JSon knows how to serialize. 
+
+== Generated Classes
+
+If you want to enable looking at the generated source code for your implementation,
+you will need to add the following to your appsettings.json file:
+
+----
+{
+  "faux": {
+    "debug": {
+      "outputSource": true,
+      "sourcePath": "./faux-generated"
+    }
+  }
+}
+----
+
+* outputSource: true to write the generated classes to the file system
+* sourcePath: path to the directory you want the generated classes placed
+
+To prevent naming conflicts between your parameters and internal Faux code,
+all Faux variables are prefixed with the Kanji 仮 (kari).  Kari is word
+that means "temporary".  When it's used as a prefix it also means "fake".
+It seemed fitting to use that particular character with English to represent
+internal variables in this project.

@@ -15,7 +15,7 @@ namespace ExampleClient
             try
             {
                 Task.Run(() => RunBlob(blobWrapper.Service)).Wait();
-                Task.Run(()=>RunExample(wrapper.Service)).Wait();
+                Task.Run(() => RunExample(wrapper.Service)).Wait();
             }
             catch (Exception ex)
             {
