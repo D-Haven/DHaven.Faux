@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace DHaven.Faux.Compiler
 {
+    /// <summary>
+    /// Internal helper to generate code to support the special attributes that
+    /// are added to the user's interface.
+    /// </summary>
     internal static class AttributeInterpreter
     {
         private static readonly IList<string> ContentHeaders = new List<string>
@@ -93,6 +95,22 @@ namespace DHaven.Faux.Compiler
             }
 
             return true;
+        }
+
+        public static void InterpretRequestParameter(ParameterInfo parameter, StringBuilder classBuilder)
+        {
+            var paramAttribute = parameter.GetCustomAttribute<RequestParameterAttribute>();
+
+            if (paramAttribute == null)
+            {
+                return;
+            }
+
+            var paramName = string.IsNullOrEmpty(paramAttribute.Parameter)
+                ? parameter.Name
+                : paramAttribute.Parameter;
+
+            classBuilder.AppendLine($"            仮reqParams.Add(\"{paramName}\", {parameter.Name}{(parameter.ParameterType.IsClass ? "?" : "")}.ToString());");
         }
     }
 }

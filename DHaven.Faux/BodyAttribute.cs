@@ -12,6 +12,9 @@ namespace DHaven.Faux
         public Format Format { get; set; }
     }
 
+    /// <summary>
+    /// Format that the body will be used to serialize the body.
+    /// </summary>
     public enum Format
     {
         Auto,

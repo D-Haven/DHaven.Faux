@@ -15,11 +15,19 @@ namespace ExampleClient
             try
             {
                 Task.Run(() => RunBlob(blobWrapper.Service)).Wait();
-                Task.Run(() => RunExample(wrapper.Service)).Wait();
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine(ex);
+            }
+
+            try
+            {
+                Task.Run(() => RunExample(wrapper.Service)).Wait();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
             }
 
             Console.In.Read();
@@ -27,7 +35,7 @@ namespace ExampleClient
 
         private static async Task RunExample(IValuesService valueService)
         {
-            Console.Out.WriteLine($"Get All Values: {string.Join(",", await valueService.Get())}");
+            Console.Out.WriteLine($"Get All Values: {string.Join(",", await valueService.Get(1, 50))}");
             Console.Out.WriteLine($"Get 1: {await valueService.Get(1)}");
         }
 

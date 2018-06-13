@@ -26,6 +26,10 @@ using System.Diagnostics;
 
 namespace DHaven.Faux.Compiler
 {
+    /// <summary>
+    /// Base class for the implementations, helps with otherwise tricky things like
+    /// path values, etc.
+    /// </summary>
     public class DiscoveryAwareBase
     {
         private readonly Uri baseUri;
@@ -35,9 +39,9 @@ namespace DHaven.Faux.Compiler
             baseUri = new Uri($"http://{serviceName}/{baseRoute}/");
         }
 
-        protected HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, IDictionary<string,object> pathVariables)
+        protected HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, IDictionary<string,object> pathVariables, IDictionary<string,string> requestParameters)
         {
-            var serviceUri = GetServiceUri(endpoint, pathVariables);
+            var serviceUri = GetServiceUri(endpoint, pathVariables, requestParameters);
             Debug.WriteLine($"Request: {serviceUri}");
             return new HttpRequestMessage(method, serviceUri);
         }
@@ -89,11 +93,25 @@ namespace DHaven.Faux.Compiler
             }
         }
 
-        private Uri GetServiceUri(string endPoint, IDictionary<string, object> variables)
+        private Uri GetServiceUri(string endPoint, IDictionary<string, object> variables, IDictionary<string,string> requestParameters)
         {
             foreach(var entry in variables)
             {
                 endPoint = endPoint.Replace($"{{{entry.Key}}}", entry.Value.ToString());
+            }
+
+            var query = new StringBuilder();
+            foreach (var entry in requestParameters)
+            {
+                query.Append(query.Length == 0 ? "?" : "&")
+                    .Append(WebUtility.UrlEncode(entry.Key))
+                    .Append("=")
+                    .Append(WebUtility.UrlEncode(entry.Value));
+            }
+
+            if (query.Length > 0)
+            {
+                endPoint += query.ToString();
             }
 
             return new Uri(baseUri, endPoint);

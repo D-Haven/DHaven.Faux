@@ -188,6 +188,7 @@ namespace DHaven.Faux.Compiler
             classBuilder.AppendLine(")");
             classBuilder.AppendLine("        {");
             classBuilder.AppendLine("            var 仮variables = new System.Collections.Generic.Dictionary<string,object>();");
+            classBuilder.AppendLine("            var 仮reqParams = new System.Collections.Generic.Dictionary<string,string>();");
 
             var contentHeaders = new Dictionary<string, ParameterInfo>();
             var requestHeaders = new Dictionary<string, ParameterInfo>();
@@ -201,9 +202,11 @@ namespace DHaven.Faux.Compiler
                 AttributeInterpreter.InterpretRequestHeader(parameter, requestHeaders, contentHeaders);
 
                 AttributeInterpreter.InterpretBodyParameter(parameter, ref bodyParam, ref bodyAttr);
+
+                AttributeInterpreter.InterpretRequestParameter(parameter, classBuilder);
             }
 
-            classBuilder.AppendLine($"            var 仮request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\", 仮variables);");
+            classBuilder.AppendLine($"            var 仮request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\", 仮variables, 仮reqParams);");
             bool hasContent = AttributeInterpreter.CreateContentObjectIfSpecified(bodyAttr, bodyParam, classBuilder);
 
             foreach (var entry in requestHeaders)
