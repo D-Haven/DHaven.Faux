@@ -192,6 +192,7 @@ namespace DHaven.Faux.Compiler
 
             var contentHeaders = new Dictionary<string, ParameterInfo>();
             var requestHeaders = new Dictionary<string, ParameterInfo>();
+            var responseHeaders = new Dictionary<string, ParameterInfo>();
             ParameterInfo bodyParam = null;
             BodyAttribute bodyAttr = null;
 
@@ -204,6 +205,8 @@ namespace DHaven.Faux.Compiler
                 AttributeInterpreter.InterpretBodyParameter(parameter, ref bodyParam, ref bodyAttr);
 
                 AttributeInterpreter.InterpretRequestParameter(parameter, classBuilder);
+
+                AttributeInterpreter.InterpretResponseHeaderInParameters(parameter, isAsyncCall, ref responseHeaders);
             }
 
             classBuilder.AppendLine($"            var 仮request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\", 仮variables, 仮reqParams);");
@@ -228,6 +231,11 @@ namespace DHaven.Faux.Compiler
             classBuilder.AppendLine(isAsyncCall
                 ? "            var 仮response = await InvokeAsync(仮request);"
                 : "            var 仮response = Invoke(仮request);");
+
+            foreach (var entry in responseHeaders)
+            {
+                classBuilder.AppendLine($"            {entry.Value.Name} = 仮response.Headers.Get(\"{entry.Key}\");");
+            }
 
             if (!isVoid)
             {

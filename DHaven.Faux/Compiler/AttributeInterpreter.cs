@@ -112,5 +112,28 @@ namespace DHaven.Faux.Compiler
 
             classBuilder.AppendLine($"            仮reqParams.Add(\"{paramName}\", {parameter.Name}{(parameter.ParameterType.IsClass ? "?" : "")}.ToString());");
         }
+
+        public static void InterpretResponseHeaderInParameters(ParameterInfo parameter, bool isAsync, ref Dictionary<string,ParameterInfo> responseHeaders)
+        {
+            var responseAttribute = parameter.GetCustomAttribute<ResponseHeaderAttribute>();
+
+            if (responseAttribute == null)
+            {
+                return;
+            }
+
+            if (!parameter.IsOut)
+            {
+                throw new WebServiceCompileException("[ResponseHeaderAttribute] must be used on out paramters or for the return type.");
+            }
+
+            if (isAsync)
+            {
+                throw new WebServiceCompileException(
+                    "[ResponseHeaderAttribute] in the parameter list cannot be used with async service calls.");
+            }
+
+            responseHeaders.Add(responseAttribute.Header, parameter);
+        }
     }
 }
