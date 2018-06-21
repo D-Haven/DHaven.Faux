@@ -23,6 +23,7 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics;
+using System.Linq;
 
 namespace DHaven.Faux.Compiler
 {
@@ -80,6 +81,18 @@ namespace DHaven.Faux.Compiler
             return ConvertToObjectAsync<TResponse>(responseMessage).Result;
         }
 
+        protected T GetHeaderValue<T>(HttpResponseMessage responseMessage, string headerName)
+        {
+            var value = responseMessage.Headers.GetValues(headerName).FirstOrDefault();
+
+            if (typeof(IConvertible).IsAssignableFrom(typeof(T)))
+            {
+                return (T) Convert.ChangeType(value, typeof(T));
+            }
+
+            return JsonConvert.DeserializeObject<T>(value);
+        }
+
         protected async Task<TResponse> ConvertToObjectAsync<TResponse>(HttpResponseMessage responseMessage)
         {
             if(responseMessage.StatusCode == HttpStatusCode.NoContent)
@@ -87,10 +100,7 @@ namespace DHaven.Faux.Compiler
                 return default(TResponse);
             }
 
-            using(var reader = new StreamReader(await responseMessage.Content.ReadAsStreamAsync()))
-            {
-                return JsonConvert.DeserializeObject<TResponse>(await reader.ReadToEndAsync());
-            }
+            return JsonConvert.DeserializeObject<TResponse>(await responseMessage.Content.ReadAsStringAsync());
         }
 
         private Uri GetServiceUri(string endPoint, IDictionary<string, object> variables, IDictionary<string,string> requestParameters)

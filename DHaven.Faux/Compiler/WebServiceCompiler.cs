@@ -100,8 +100,8 @@ namespace DHaven.Faux.Compiler
             }
 
             var className = typeInfo.FullName?.Replace(".", string.Empty);
-            var serviceName = typeInfo.GetCustomAttribute<FauxClientAttribute>().Name;
-            var baseRoute = typeInfo.GetCustomAttribute<RouteAttribute>().BaseRoute;
+            var serviceName = CustomAttributeExtensions.GetCustomAttribute<FauxClientAttribute>(typeInfo).Name;
+            var baseRoute = CustomAttributeExtensions.GetCustomAttribute<RouteAttribute>(typeInfo).BaseRoute;
 
             var classBuilder = new StringBuilder();
             classBuilder.AppendLine($"namespace {RootNamespace}");
@@ -153,8 +153,8 @@ namespace DHaven.Faux.Compiler
 
         private void BuildMethod(StringBuilder classBuilder, MethodInfo method)
         {
-            bool isAsyncCall = typeof(Task).IsAssignableFrom(method.ReturnType);
-            Type returnType = method.ReturnType;
+            var isAsyncCall = typeof(Task).IsAssignableFrom(method.ReturnType);
+            var returnType = method.ReturnType;
 
             if(isAsyncCall && method.ReturnType.IsConstructedGenericType)
             {
@@ -181,7 +181,7 @@ namespace DHaven.Faux.Compiler
                 classBuilder.Append(isVoid ? "void" : ToCompilableName(returnType));
             }
 
-            HttpMethodAttribute attribute = method.GetCustomAttribute<HttpMethodAttribute>();
+            var attribute = CustomAttributeExtensions.GetCustomAttribute<HttpMethodAttribute>(method);
 
             classBuilder.Append($" {method.Name}(");
             classBuilder.Append(string.Join(", ", method.GetParameters().Select(p => $"{ToCompilableName(p.ParameterType)} {p.Name}")));
@@ -210,7 +210,7 @@ namespace DHaven.Faux.Compiler
             }
 
             classBuilder.AppendLine($"            var 仮request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\", 仮variables, 仮reqParams);");
-            bool hasContent = AttributeInterpreter.CreateContentObjectIfSpecified(bodyAttr, bodyParam, classBuilder);
+            var hasContent = AttributeInterpreter.CreateContentObjectIfSpecified(bodyAttr, bodyParam, classBuilder);
 
             foreach (var entry in requestHeaders)
             {
@@ -234,14 +234,32 @@ namespace DHaven.Faux.Compiler
 
             foreach (var entry in responseHeaders)
             {
-                classBuilder.AppendLine($"            {entry.Value.Name} = 仮response.Headers.Get(\"{entry.Key}\");");
+                classBuilder.AppendLine($"            {entry.Value.Name} = GetHeaderValue<{ToCompilableName(returnType)}>(仮response, \"{entry.Key}\");");
             }
 
             if (!isVoid)
             {
-                classBuilder.AppendLine(isAsyncCall
-                    ? $"            return await ConvertToObjectAsync<{ToCompilableName(returnType)}>(仮response);"
-                    : $"            return ConvertToObject<{ToCompilableName(returnType)}>(仮response);");
+                var returnBodyAttribute = method.ReturnParameter?.GetCustomAttribute<BodyAttribute>();
+                var returnResponseAttribute = method.ReturnParameter?.GetCustomAttribute<ResponseHeaderAttribute>();
+
+                if (returnResponseAttribute != null && returnBodyAttribute != null)
+                {
+                    throw new WebServiceCompileException($"Cannot have different types of response attributes.  You had [{string.Join(", ", "Body", "ResponseHeader")}]");
+                }
+
+                if (returnResponseAttribute != null)
+                {
+                    AttributeInterpreter.ReturnResponseHeader(returnResponseAttribute, returnType, classBuilder);
+                }
+                else
+                {
+                    if (returnBodyAttribute == null)
+                    {
+                        returnBodyAttribute = new BodyAttribute();
+                    }
+
+                    AttributeInterpreter.ReturnContentObject(returnBodyAttribute, returnType, isAsyncCall, classBuilder);
+                }
             }
 
             classBuilder.AppendLine("        }");
@@ -253,7 +271,7 @@ namespace DHaven.Faux.Compiler
             return $"System.Net.Http.HttpMethod.{value}";
         }
 
-        private static string ToCompilableName(Type type)
+        public static string ToCompilableName(Type type)
         {
             var baseName = type.FullName;
 

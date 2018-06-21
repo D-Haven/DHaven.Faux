@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -22,7 +24,7 @@ namespace DHaven.Faux.Compiler
 
         public static void InterpretPathValue(ParameterInfo parameter, StringBuilder classBuilder)
         {
-            var pathValue = parameter.GetCustomAttribute<PathValueAttribute>();
+            var pathValue = CustomAttributeExtensions.GetCustomAttribute<PathValueAttribute>(parameter);
 
             if (pathValue != null)
             {
@@ -33,7 +35,7 @@ namespace DHaven.Faux.Compiler
 
         public static void InterpretRequestHeader(ParameterInfo parameter, Dictionary<string, ParameterInfo> requestHeaders, Dictionary<string, ParameterInfo> contentHeaders)
         {
-            var requestHeader = parameter.GetCustomAttribute<RequestHeaderAttribute>();
+            var requestHeader = CustomAttributeExtensions.GetCustomAttribute<RequestHeaderAttribute>(parameter);
 
             if (requestHeader == null)
             {
@@ -52,7 +54,7 @@ namespace DHaven.Faux.Compiler
 
         public static void InterpretBodyParameter(ParameterInfo parameter, ref ParameterInfo bodyParam, ref BodyAttribute bodyAttr)
         {
-            var attr = parameter.GetCustomAttribute<BodyAttribute>();
+            var attr = CustomAttributeExtensions.GetCustomAttribute<BodyAttribute>(parameter);
 
             if (attr == null)
             {
@@ -97,9 +99,40 @@ namespace DHaven.Faux.Compiler
             return true;
         }
 
+        public static void ReturnContentObject(BodyAttribute bodyAttr, Type returnType, bool isAsyncCall, StringBuilder classBuilder)
+        {
+            if (bodyAttr == null || returnType == null)
+            {
+                return;
+            }
+
+            var format = bodyAttr.Format;
+
+            if (format == Format.Auto)
+            {
+                format = typeof(Stream).IsAssignableFrom(returnType) ? Format.Raw : Format.Json;
+            }
+
+            switch (format)
+            {
+                case Format.Json:
+                    classBuilder.AppendLine(isAsyncCall
+                        ? $"            return await ConvertToObjectAsync<{WebServiceComplier.ToCompilableName(returnType)}>(仮response);"
+                        : $"            return ConvertToObject<{WebServiceComplier.ToCompilableName(returnType)}>(仮response);");
+                    break;
+                case Format.Raw:
+                    classBuilder.AppendLine(isAsyncCall
+                        ? "            return await 仮response.Content.ReadAsStreamAsync();"
+                        : "            return 仮response.Content.ReadAsStreamAsync().Result;");
+                    break;
+                default:
+                    return;
+            }
+        }
+
         public static void InterpretRequestParameter(ParameterInfo parameter, StringBuilder classBuilder)
         {
-            var paramAttribute = parameter.GetCustomAttribute<RequestParameterAttribute>();
+            var paramAttribute = CustomAttributeExtensions.GetCustomAttribute<RequestParameterAttribute>(parameter);
 
             if (paramAttribute == null)
             {
@@ -115,7 +148,7 @@ namespace DHaven.Faux.Compiler
 
         public static void InterpretResponseHeaderInParameters(ParameterInfo parameter, bool isAsync, ref Dictionary<string,ParameterInfo> responseHeaders)
         {
-            var responseAttribute = parameter.GetCustomAttribute<ResponseHeaderAttribute>();
+            var responseAttribute = CustomAttributeExtensions.GetCustomAttribute<ResponseHeaderAttribute>(parameter);
 
             if (responseAttribute == null)
             {
@@ -134,6 +167,11 @@ namespace DHaven.Faux.Compiler
             }
 
             responseHeaders.Add(responseAttribute.Header, parameter);
+        }
+
+        public static void ReturnResponseHeader(ResponseHeaderAttribute responseHeaderAttribute, Type returnType, StringBuilder classBuilder)
+        {
+            classBuilder.AppendLine($"            return GetHeaderValue<{WebServiceComplier.ToCompilableName(returnType)}>(仮response, \"{responseHeaderAttribute.Header}\");");
         }
     }
 }
