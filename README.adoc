@@ -82,7 +82,7 @@ internal variables in this project.
 
 Please add issues if there any problems, questions, or feature requests.
 
-To contribute code, link:sign the Contributor License Agreement[https://www.clahub.com/agreements/bloritsch/DHaven.Faux].
+To contribute code, link:https://www.clahub.com/agreements/bloritsch/DHaven.Faux[sign the Contributor License Agreement].
 
 We need the CLA to protect the project and to protect you from legal implications.
 Feel free to fork, make changes, and provide pull requests.
