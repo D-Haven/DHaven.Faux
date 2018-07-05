@@ -49,9 +49,9 @@ namespace DHaven.Faux.Compiler
             }
         }
 
-        private static string SourceFilePath { get; }
+        public static string SourceFilePath { get; set; }
 
-        private static bool OutputSourceFiles { get; }
+        public static bool OutputSourceFiles { get; set; }
 
         public static string GenerateSource(TypeInfo typeInfo, out string fullClassName)
         {
@@ -90,17 +90,19 @@ namespace DHaven.Faux.Compiler
 
             var sourceCode = classBuilder.ToString();
 
-            if (OutputSourceFiles)
+            if (!OutputSourceFiles)
             {
-                var fullPath = Path.Combine(SourceFilePath, className + ".cs");
-                try
-                {
-                    File.WriteAllText(fullPath, sourceCode, Encoding.UTF8);
-                }
-                catch(Exception ex)
-                {
-                    DiscoverySupport.Logger.LogWarning(ex, "Could not write the source code for {0}", fullPath);
-                }
+                return sourceCode;
+            }
+
+            var fullPath = Path.Combine(SourceFilePath, $"{className}.cs");
+            try
+            {
+                File.WriteAllText(fullPath, sourceCode, Encoding.UTF8);
+            }
+            catch(Exception ex)
+            {
+                DiscoverySupport.Logger.LogWarning(ex, "Could not write the source code for {0}", fullPath);
             }
 
             return sourceCode;
