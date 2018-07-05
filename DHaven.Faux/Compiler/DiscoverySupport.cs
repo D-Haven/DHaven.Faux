@@ -17,14 +17,14 @@ namespace DHaven.Faux.Compiler
         {
             var builder = new ConfigurationBuilder()
                .SetBasePath(Directory.GetCurrentDirectory())
-               .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+               .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                .AddEnvironmentVariables();
 
             Configuration = builder.Build();
 
             var logFactory = new LoggerFactory();
             logFactory.AddDebug(LogLevel.Trace);
-            Logger = logFactory.CreateLogger<WebServiceComplier>();
+            Logger = logFactory.CreateLogger<WebServiceCompiler>();
 
             var factory = new DiscoveryClientFactory(new DiscoveryOptions(Configuration));
 
@@ -38,7 +38,7 @@ namespace DHaven.Faux.Compiler
 
         internal static IConfiguration Configuration { get; }
 
-        internal static ILogger<WebServiceComplier> Logger { get; }
+        internal static ILogger<WebServiceCompiler> Logger { get; }
 
         internal static HttpClient Client { get; }
     }

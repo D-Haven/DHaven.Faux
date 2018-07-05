@@ -14,6 +14,7 @@
 
 #endregion
 
+using System.Reflection;
 using DHaven.Faux.Compiler;
 
 namespace DHaven.Faux
@@ -21,14 +22,14 @@ namespace DHaven.Faux
     public class Faux<TService>
         where TService : class // Really an interface
     {
+        private readonly string className;
         private TService service;
-        private readonly WebServiceCompiler<TService> compiler;
 
         public Faux()
         {
-            compiler = new WebServiceCompiler<TService>();
+            className = TypeFactory.Compiler.RegisterInterface(typeof(TService).GetTypeInfo());
         }
 
-        public TService Service => service ?? (service = compiler.Generate());
+        public TService Service => service ?? (service = TypeFactory.CreateInstance<TService>(className));
     }
 }

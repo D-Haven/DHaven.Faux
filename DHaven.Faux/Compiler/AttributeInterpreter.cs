@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -22,20 +21,22 @@ namespace DHaven.Faux.Compiler
             "content-location"
         };
 
-        public static void InterpretPathValue(ParameterInfo parameter, StringBuilder classBuilder)
+        internal static void InterpretPathValue(ParameterInfo parameter, StringBuilder classBuilder)
         {
-            var pathValue = CustomAttributeExtensions.GetCustomAttribute<PathValueAttribute>(parameter);
+            var pathValue = parameter.GetCustomAttribute<PathValueAttribute>();
 
-            if (pathValue != null)
+            if (pathValue == null)
             {
-                var key = string.IsNullOrEmpty(pathValue.Variable) ? parameter.Name : pathValue.Variable;
-                classBuilder.AppendLine($"            仮variables.Add(\"{key}\", {parameter.Name});");
+                return;
             }
+
+            var key = string.IsNullOrEmpty(pathValue.Variable) ? parameter.Name : pathValue.Variable;
+            classBuilder.AppendLine($"            仮variables.Add(\"{key}\", {parameter.Name});");
         }
 
-        public static void InterpretRequestHeader(ParameterInfo parameter, Dictionary<string, ParameterInfo> requestHeaders, Dictionary<string, ParameterInfo> contentHeaders)
+        internal static void InterpretRequestHeader(ParameterInfo parameter, Dictionary<string, ParameterInfo> requestHeaders, Dictionary<string, ParameterInfo> contentHeaders)
         {
-            var requestHeader = CustomAttributeExtensions.GetCustomAttribute<RequestHeaderAttribute>(parameter);
+            var requestHeader = parameter.GetCustomAttribute<RequestHeaderAttribute>();
 
             if (requestHeader == null)
             {
@@ -52,9 +53,9 @@ namespace DHaven.Faux.Compiler
             }
         }
 
-        public static void InterpretBodyParameter(ParameterInfo parameter, ref ParameterInfo bodyParam, ref BodyAttribute bodyAttr)
+        internal static void InterpretBodyParameter(ParameterInfo parameter, ref ParameterInfo bodyParam, ref BodyAttribute bodyAttr)
         {
-            var attr = CustomAttributeExtensions.GetCustomAttribute<BodyAttribute>(parameter);
+            var attr = parameter.GetCustomAttribute<BodyAttribute>();
 
             if (attr == null)
             {
@@ -70,7 +71,7 @@ namespace DHaven.Faux.Compiler
             bodyParam = parameter;
         }
 
-        public static bool CreateContentObjectIfSpecified(BodyAttribute bodyAttr, ParameterInfo bodyParam, StringBuilder clasStringBuilder)
+        internal static bool CreateContentObjectIfSpecified(BodyAttribute bodyAttr, ParameterInfo bodyParam, StringBuilder clasStringBuilder)
         {
             if (bodyAttr == null || bodyParam == null)
             {
@@ -99,7 +100,7 @@ namespace DHaven.Faux.Compiler
             return true;
         }
 
-        public static void ReturnContentObject(BodyAttribute bodyAttr, Type returnType, bool isAsyncCall, StringBuilder classBuilder)
+        internal static void ReturnContentObject(BodyAttribute bodyAttr, Type returnType, bool isAsyncCall, StringBuilder classBuilder)
         {
             if (bodyAttr == null || returnType == null)
             {
@@ -117,8 +118,8 @@ namespace DHaven.Faux.Compiler
             {
                 case Format.Json:
                     classBuilder.AppendLine(isAsyncCall
-                        ? $"            return await ConvertToObjectAsync<{WebServiceComplier.ToCompilableName(returnType)}>(仮response);"
-                        : $"            return ConvertToObject<{WebServiceComplier.ToCompilableName(returnType)}>(仮response);");
+                        ? $"            return await ConvertToObjectAsync<{WebServiceClassGenerator.ToCompilableName(returnType)}>(仮response);"
+                        : $"            return ConvertToObject<{WebServiceClassGenerator.ToCompilableName(returnType)}>(仮response);");
                     break;
                 case Format.Raw:
                     classBuilder.AppendLine(isAsyncCall
@@ -130,9 +131,9 @@ namespace DHaven.Faux.Compiler
             }
         }
 
-        public static void InterpretRequestParameter(ParameterInfo parameter, StringBuilder classBuilder)
+        internal static void InterpretRequestParameter(ParameterInfo parameter, StringBuilder classBuilder)
         {
-            var paramAttribute = CustomAttributeExtensions.GetCustomAttribute<RequestParameterAttribute>(parameter);
+            var paramAttribute = parameter.GetCustomAttribute<RequestParameterAttribute>();
 
             if (paramAttribute == null)
             {
@@ -146,9 +147,9 @@ namespace DHaven.Faux.Compiler
             classBuilder.AppendLine($"            仮reqParams.Add(\"{paramName}\", {parameter.Name}{(parameter.ParameterType.IsClass ? "?" : "")}.ToString());");
         }
 
-        public static void InterpretResponseHeaderInParameters(ParameterInfo parameter, bool isAsync, ref Dictionary<string,ParameterInfo> responseHeaders)
+        internal static void InterpretResponseHeaderInParameters(ParameterInfo parameter, bool isAsync, ref Dictionary<string,ParameterInfo> responseHeaders)
         {
-            var responseAttribute = CustomAttributeExtensions.GetCustomAttribute<ResponseHeaderAttribute>(parameter);
+            var responseAttribute = parameter.GetCustomAttribute<ResponseHeaderAttribute>();
 
             if (responseAttribute == null)
             {
@@ -169,9 +170,9 @@ namespace DHaven.Faux.Compiler
             responseHeaders.Add(responseAttribute.Header, parameter);
         }
 
-        public static void ReturnResponseHeader(ResponseHeaderAttribute responseHeaderAttribute, Type returnType, StringBuilder classBuilder)
+        internal static void ReturnResponseHeader(ResponseHeaderAttribute responseHeaderAttribute, Type returnType, StringBuilder classBuilder)
         {
-            classBuilder.AppendLine($"            return GetHeaderValue<{WebServiceComplier.ToCompilableName(returnType)}>(仮response, \"{responseHeaderAttribute.Header}\");");
+            classBuilder.AppendLine($"            return GetHeaderValue<{WebServiceClassGenerator.ToCompilableName(returnType)}>(仮response, \"{responseHeaderAttribute.Header}\");");
         }
     }
 }
