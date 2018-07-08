@@ -23,6 +23,10 @@ namespace DHaven.FauxGen
             var assembly = Assembly.LoadFile(opts.InputAssemblyPath);
             var compiler = new WebServiceCompiler();
 
+            WebServiceClassGenerator.RootNamespace = opts.RootNameSapce ?? WebServiceClassGenerator.RootNamespace;
+            WebServiceClassGenerator.OutputSourceFiles = opts.OutputSourceCode;
+            WebServiceClassGenerator.SourceFilePath = opts.OutputSourcePath ?? WebServiceClassGenerator.SourceFilePath;
+
             foreach (var iface in assembly.GetExportedTypes())
             {
                 if (iface.IsInterface && iface.GetCustomAttribute<FauxClientAttribute>() != null)

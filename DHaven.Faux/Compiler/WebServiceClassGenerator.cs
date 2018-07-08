@@ -29,8 +29,6 @@ namespace DHaven.Faux.Compiler
 {
     public static class WebServiceClassGenerator
     {
-        private const string RootNamespace = "DHaven.Feign.Wrapper";
-
         static WebServiceClassGenerator()
         {
             var faux = DiscoverySupport.Configuration.GetSection("faux");
@@ -53,6 +51,8 @@ namespace DHaven.Faux.Compiler
         public static string SourceFilePath { get; set; }
 
         public static bool OutputSourceFiles { get; set; }
+
+        public static string RootNamespace { get; set; } = "DHaven.Feign.Wrapper";
 
         public static string GenerateSource(TypeInfo typeInfo, out string fullClassName)
         {
