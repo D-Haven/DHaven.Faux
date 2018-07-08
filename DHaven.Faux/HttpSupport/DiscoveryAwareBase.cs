@@ -23,8 +23,8 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using DHaven.Faux.Compiler;
 using Newtonsoft.Json;
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace DHaven.Faux.HttpSupport
 {
@@ -32,6 +32,7 @@ namespace DHaven.Faux.HttpSupport
     /// Base class for the implementations, helps with otherwise tricky things like
     /// path values, etc.
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class DiscoveryAwareBase
     {
         private readonly Uri baseUri;
@@ -106,10 +107,7 @@ namespace DHaven.Faux.HttpSupport
 
         private Uri GetServiceUri(string endPoint, IDictionary<string, object> variables, IDictionary<string,string> requestParameters)
         {
-            foreach(var entry in variables)
-            {
-                endPoint = endPoint.Replace($"{{{entry.Key}}}", entry.Value.ToString());
-            }
+            endPoint = variables.Aggregate(endPoint, (current, entry) => current.Replace($"{{{entry.Key}}}", entry.Value.ToString()));
 
             var query = new StringBuilder();
             foreach (var entry in requestParameters)

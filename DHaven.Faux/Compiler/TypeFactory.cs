@@ -18,6 +18,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
+using DHaven.Faux.HttpSupport;
+using Microsoft.Extensions.Logging;
 
 namespace DHaven.Faux.Compiler
 {
@@ -25,7 +27,13 @@ namespace DHaven.Faux.Compiler
     {
         private static readonly Type[] EmptyTypes = new Type[0];
         private static readonly object[] EmptyParams = new object[0];
+        private static readonly ILogger Logger;
         private static Assembly generatedAssembly;
+
+        static TypeFactory()
+        {
+            Logger = DiscoverySupport.LogFactory.CreateLogger(typeof(TypeFactory));
+        }
 
         internal static WebServiceCompiler Compiler { get; } = new WebServiceCompiler();
 
@@ -42,14 +50,15 @@ namespace DHaven.Faux.Compiler
         private static void EnsureAssemblyIsGenerated()
         {
             // Delay until all services have been registered first.
-            if (generatedAssembly == null)
+            if (generatedAssembly != null)
             {
                 return;
             }
 
+            Logger.LogInformation("Compiling and loading type assembly in memory.");
             using (var stream = new MemoryStream())
             {
-                Compiler.Compile(stream);
+                Compiler.Compile(stream, Path.GetRandomFileName());
                 stream.Seek(0, SeekOrigin.Begin);
                 generatedAssembly = AssemblyLoadContext.Default.LoadFromStream(stream);
             }

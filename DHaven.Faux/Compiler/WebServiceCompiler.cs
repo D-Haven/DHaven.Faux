@@ -20,8 +20,10 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using DHaven.Faux.HttpSupport;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Extensions.Logging;
 using TypeInfo = System.Reflection.TypeInfo;
 
 namespace DHaven.Faux.Compiler
@@ -31,6 +33,9 @@ namespace DHaven.Faux.Compiler
         private readonly List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
         private readonly ISet<string> references = new HashSet<string>();
 
+        private readonly ILogger<WebServiceCompiler> logger =
+            DiscoverySupport.LogFactory.CreateLogger<WebServiceCompiler>();
+
         public WebServiceCompiler()
         {
             UpdateReferences(GetType().GetTypeInfo().Assembly);
@@ -38,9 +43,13 @@ namespace DHaven.Faux.Compiler
 
         public string RegisterInterface(TypeInfo type)
         {
+            logger.LogDebug($"Registering the interface: {type.FullName}");
+            
             UpdateReferences(type.Assembly);
             var sourceCode = WebServiceClassGenerator.GenerateSource(type, out var fullyQualifiedClassName);
             syntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(sourceCode));
+            
+            logger.LogDebug($"Finished compiling the syntax tree for {fullyQualifiedClassName} generated from {type.FullName}");
 
             return fullyQualifiedClassName;
         }
@@ -54,18 +63,18 @@ namespace DHaven.Faux.Compiler
                 return;
             }
 
+            logger.LogTrace($"Registering reference to {assembly.FullName}");
             references.Add(referenceLocation);
 
             foreach(var dependency in assembly.GetReferencedAssemblies())
             {
+                logger.LogTrace($"Loading dependency {dependency.FullName}");
                 UpdateReferences(Assembly.Load(dependency));
             }
         }
 
-        public void Compile(Stream stream)
+        public void Compile(Stream stream, string assemblyName)
         {
-            var assemblyName = Path.GetRandomFileName();
-
             var compilation = CSharpCompilation.Create(assemblyName)
                 .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
                 .AddReferences(references.Select(location => MetadataReference.CreateFromFile(location)))
