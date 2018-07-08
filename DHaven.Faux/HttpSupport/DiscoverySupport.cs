@@ -1,11 +1,12 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Steeltoe.Discovery.Client;
-using System.IO;
+﻿using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using DHaven.Faux.Compiler;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Steeltoe.Discovery.Client;
 
-namespace DHaven.Faux.Compiler
+namespace DHaven.Faux.HttpSupport
 {
     /// <summary>
     /// Manage the HttpClient for hte application.  NOTE: HttpClient is designed to be a singleton even though it implements IDisposable.

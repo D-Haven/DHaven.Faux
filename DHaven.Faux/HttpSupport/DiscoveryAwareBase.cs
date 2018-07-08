@@ -15,17 +15,18 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using DHaven.Faux.Compiler;
 using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.IO;
-using System.Diagnostics;
-using System.Linq;
 
-namespace DHaven.Faux.Compiler
+namespace DHaven.Faux.HttpSupport
 {
     /// <summary>
     /// Base class for the implementations, helps with otherwise tricky things like
