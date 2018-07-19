@@ -25,7 +25,7 @@ namespace DHaven.Faux.HttpSupport
     /// Manage the HttpClient for hte application.  NOTE: HttpClient is designed to be a singleton even though it implements IDisposable.
     /// See https://aspnetmonsters.com/2016/08/2016-08-27-httpclientwrong/ for more details
     /// </summary>
-    internal static class DiscoverySupport
+    public static class DiscoverySupport
     {
         static DiscoverySupport()
         {
@@ -50,6 +50,6 @@ namespace DHaven.Faux.HttpSupport
 
         internal static ILoggerFactory LogFactory { get; }
 
-        internal static IHttpClient Client { get; }
+        public static IHttpClient Client { get; set; }
     }
 }
