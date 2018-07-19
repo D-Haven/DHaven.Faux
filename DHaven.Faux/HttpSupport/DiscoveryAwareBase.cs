@@ -39,7 +39,15 @@ namespace DHaven.Faux.HttpSupport
 
         public DiscoveryAwareBase(string serviceName, string baseRoute)
         {
-            baseUri = new Uri($"http://{serviceName}/{baseRoute}/");
+            var uriString = $"http://{serviceName}/{baseRoute}/";
+
+            // Handle when there is no base route, but there is a service name.
+            if (uriString.EndsWith("//"))
+            {
+                uriString = uriString.Substring(0, uriString.Length - 1);
+            }
+            
+            baseUri = new Uri(uriString);
         }
 
         protected HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, IDictionary<string,object> pathVariables, IDictionary<string,string> requestParameters)
