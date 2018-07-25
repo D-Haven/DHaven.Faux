@@ -18,12 +18,17 @@ using System.Linq.Expressions;
 using System.Net.Http;
 using System.Threading.Tasks;
 using DHaven.Faux.HttpSupport;
+using DHaven.Faux.Test.HttpMethods;
+using DHaven.Faux.Test.ReturnTypes;
 using Moq;
 
 namespace DHaven.Faux.Test
 {
     public static class Test
     {
+        public static readonly Faux<ITodoService> FauxTodo = new Faux<ITodoService>();
+        public static readonly Faux<IReturnService> FauxReturn = new Faux<IReturnService>();
+
         public static IHttpClient MockRequest(Expression<Func<HttpRequestMessage, bool>> verifyRequest,
             HttpResponseMessage response)
         {

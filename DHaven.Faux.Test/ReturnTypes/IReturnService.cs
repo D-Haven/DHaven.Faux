@@ -13,25 +13,33 @@
 // limitations under the License.
 #endregion
 
-using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace DHaven.Faux.Test.HttpMethods
+namespace DHaven.Faux.Test.ReturnTypes
 {
-    [FauxClient("todo")]
-    public interface ITodoService
+    public class Value
     {
-        [HttpGet]
-        [return:Body]
-        IEnumerable<KeyValuePair<int,string>> List();
-
-        [HttpGet("{id}")]
+        public string Content { get; set; }
+        public bool IsValid { get; set; }
+    }
+    
+    [FauxClient("return")]
+    public interface IReturnService
+    {
+        [HttpPut]
         [return:ResponseHeader("Location")]
-        string Get([PathValue] int id);
+        Task<string> PutAsync();
 
         [HttpPut]
-        int Add([Body] string todo);
+        [return:ResponseHeader("Location")]
+        string Put();
 
-        [HttpDelete("{id}")]
-        void Delete([PathValue] int id);
+        [HttpPost("echo")]
+        [return: Body(Format = Format.Json)]
+        Task<Value> EchoAsync(Value val);
+
+        [HttpPost("echo")]
+        [return: Body(Format = Format.Json)]
+        Value Echo(Value val);
     }
 }

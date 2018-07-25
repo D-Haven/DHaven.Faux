@@ -24,8 +24,6 @@ namespace DHaven.Faux.Test.HttpMethods
 {
     public class TestMethodCalls
     {
-        private static readonly Faux<ITodoService> FauxTodo = new Faux<ITodoService>();
-
         [Fact]
         public void FauxGeneratesCallWithHttpGet()
         {
@@ -35,7 +33,7 @@ namespace DHaven.Faux.Test.HttpMethods
                 {
                     Content = new StringContent("[]", Encoding.UTF8, "application/json")
                 });
-            var service = FauxTodo.Service;
+            var service = Test.FauxTodo.Service;
 
             var result = service.List();
             result.Should().BeEmpty();
@@ -48,7 +46,7 @@ namespace DHaven.Faux.Test.HttpMethods
                 req => req.Method == HttpMethod.Delete && req.RequestUri.ToString() == "http://todo/21",
                 new HttpResponseMessage(HttpStatusCode.NoContent));
             
-            var service = FauxTodo.Service;
+            var service = Test.FauxTodo.Service;
 
             service.Delete(21);
         }
