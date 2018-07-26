@@ -20,6 +20,7 @@ using System.Text;
 using System.Threading.Tasks;
 using DHaven.Faux.HttpSupport;
 using FluentAssertions;
+using Microsoft.CodeAnalysis;
 using Xunit;
 
 namespace DHaven.Faux.Test.ReturnTypes
@@ -92,6 +93,28 @@ namespace DHaven.Faux.Test.ReturnTypes
             var value = service.Echo(new Value {Content = "Goodbye", IsValid = false});
             value.Content.Should().BeEquivalentTo("Hello World");
             value.IsValid.Should().BeTrue();
+        }
+
+        [Fact]
+        public void CanGetResponseHeadersViaOutVariables()
+        {
+            var service = Test.FauxReturn.Service;
+
+            DiscoverySupport.Client = Test.MockRequest(request =>
+                    request.Method == HttpMethod.Get && request.RequestUri.ToString() == "http://return/123",
+                new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("{Content: \"Hello World\", IsValid: true}", Encoding.UTF8,
+                        "application/json"),
+                    Headers = { Location = new Uri("http://return/123")}
+                });
+
+            var value = service.Get(123, out var location, out var mimeType);
+            value.Content.Should().BeEquivalentTo("Hello World");
+            value.IsValid.Should().BeTrue();
+
+            mimeType.Should().StartWithEquivalent("application/json");
+            location.Should().BeEquivalentTo("http://return/123");
         }
     }
 }

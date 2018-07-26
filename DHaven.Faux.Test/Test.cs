@@ -26,8 +26,16 @@ namespace DHaven.Faux.Test
 {
     public static class Test
     {
-        public static readonly Faux<ITodoService> FauxTodo = new Faux<ITodoService>();
-        public static readonly Faux<IReturnService> FauxReturn = new Faux<IReturnService>();
+        static Test()
+        {
+            Compiler.WebServiceClassGenerator.OutputSourceFiles = true;
+            Compiler.WebServiceClassGenerator.SourceFilePath = "./dhaven-faux";
+            FauxTodo = new Faux<ITodoService>();
+            FauxReturn = new Faux<IReturnService>();
+        }
+        
+        public static readonly Faux<ITodoService> FauxTodo;
+        public static readonly Faux<IReturnService> FauxReturn;
 
         public static IHttpClient MockRequest(Expression<Func<HttpRequestMessage, bool>> verifyRequest,
             HttpResponseMessage response)

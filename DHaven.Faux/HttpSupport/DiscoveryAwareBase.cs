@@ -93,7 +93,10 @@ namespace DHaven.Faux.HttpSupport
 
         protected T GetHeaderValue<T>(HttpResponseMessage responseMessage, string headerName)
         {
-            var value = responseMessage.Headers.GetValues(headerName).FirstOrDefault();
+            // Because Microsoft.  Y U so stupid?
+            var value = headerName.StartsWith("Content-") 
+                ? responseMessage.Content.Headers.GetValues(headerName).FirstOrDefault()
+                : responseMessage.Headers.GetValues(headerName).FirstOrDefault();
 
             if (typeof(IConvertible).IsAssignableFrom(typeof(T)))
             {

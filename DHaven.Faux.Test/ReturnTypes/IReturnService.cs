@@ -13,6 +13,7 @@
 // limitations under the License.
 #endregion
 
+using System;
 using System.Threading.Tasks;
 
 namespace DHaven.Faux.Test.ReturnTypes
@@ -36,10 +37,16 @@ namespace DHaven.Faux.Test.ReturnTypes
 
         [HttpPost("echo")]
         [return: Body(Format = Format.Json)]
-        Task<Value> EchoAsync(Value val);
+        Task<Value> EchoAsync([Body] Value val);
 
         [HttpPost("echo")]
         [return: Body(Format = Format.Json)]
-        Value Echo(Value val);
+        Value Echo([Body] Value val);
+        
+        [HttpGet("{id}")]
+        [return:Body]
+        Value Get([PathValue] int id,
+            [ResponseHeader("Location")] out string location,
+            [ResponseHeader("Content-Type")] out string mimeType);
     }
 }
