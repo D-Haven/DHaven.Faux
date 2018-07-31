@@ -29,6 +29,7 @@ namespace DHaven.Faux.Test.HttpMethods
         string Get([PathValue] int id);
 
         [HttpPut]
+        [return:Body]
         int Add([Body] string todo);
 
         [HttpDelete("{id}")]

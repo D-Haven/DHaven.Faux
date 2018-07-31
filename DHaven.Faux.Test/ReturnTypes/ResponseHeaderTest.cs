@@ -20,7 +20,6 @@ using System.Text;
 using System.Threading.Tasks;
 using DHaven.Faux.HttpSupport;
 using FluentAssertions;
-using Microsoft.CodeAnalysis;
 using Xunit;
 
 namespace DHaven.Faux.Test.ReturnTypes
@@ -33,10 +32,13 @@ namespace DHaven.Faux.Test.ReturnTypes
             var service = Test.FauxReturn.Service;
 
             DiscoverySupport.Client = Test.MockRequest(request =>
-                    request.Method == HttpMethod.Put && request.RequestUri.ToString() == "http://return/",
+                {
+                    request.Method.Should().BeEquivalentTo(HttpMethod.Put);
+                    request.RequestUri.ToString().Should().BeEquivalentTo("http://return/");
+                },
                 new HttpResponseMessage(HttpStatusCode.OK)
                 {
-                    Headers = {Location = new Uri("http://return/abcd-1234")}
+                    Headers = { Location = new Uri("http://return/abcd-1234") }
                 });
 
             var location = await service.PutAsync();
@@ -49,10 +51,13 @@ namespace DHaven.Faux.Test.ReturnTypes
             var service = Test.FauxReturn.Service;
 
             DiscoverySupport.Client = Test.MockRequest(request =>
-                    request.Method == HttpMethod.Put && request.RequestUri.ToString() == "http://return/",
+                {
+                    request.Method.Should().BeEquivalentTo(HttpMethod.Put);
+                    request.RequestUri.ToString().Should().BeEquivalentTo("http://return/");
+                },
                 new HttpResponseMessage(HttpStatusCode.OK)
                 {
-                    Headers = {Location = new Uri("http://return/abcd-1234")}
+                    Headers = { Location = new Uri("http://return/abcd-1234") }
                 });
 
             var location = service.Put();
@@ -65,14 +70,17 @@ namespace DHaven.Faux.Test.ReturnTypes
             var service = Test.FauxReturn.Service;
 
             DiscoverySupport.Client = Test.MockRequest(request =>
-                    request.Method == HttpMethod.Post && request.RequestUri.ToString() == "http://return/echo",
+                {
+                    request.Method.Should().BeEquivalentTo(HttpMethod.Post);
+                    request.RequestUri.ToString().Should().BeEquivalentTo("http://return/echo");
+                },
                 new HttpResponseMessage(HttpStatusCode.OK)
                 {
                     Content = new StringContent("{Content: \"Hello World\", IsValid: true}", Encoding.UTF8,
                         "application/json")
                 });
 
-            var value = await service.EchoAsync(new Value {Content = "Goodbye", IsValid = false});
+            var value = await service.EchoAsync(new Value { Content = "Goodbye", IsValid = false });
             value.Content.Should().BeEquivalentTo("Hello World");
             value.IsValid.Should().BeTrue();
         }
@@ -83,14 +91,17 @@ namespace DHaven.Faux.Test.ReturnTypes
             var service = Test.FauxReturn.Service;
 
             DiscoverySupport.Client = Test.MockRequest(request =>
-                    request.Method == HttpMethod.Post && request.RequestUri.ToString() == "http://return/echo",
+                {
+                    request.Method.Should().BeEquivalentTo(HttpMethod.Post);
+                    request.RequestUri.ToString().Should().BeEquivalentTo("http://return/echo");
+                },
                 new HttpResponseMessage(HttpStatusCode.OK)
                 {
                     Content = new StringContent("{Content: \"Hello World\", IsValid: true}", Encoding.UTF8,
                         "application/json")
                 });
 
-            var value = service.Echo(new Value {Content = "Goodbye", IsValid = false});
+            var value = service.Echo(new Value { Content = "Goodbye", IsValid = false });
             value.Content.Should().BeEquivalentTo("Hello World");
             value.IsValid.Should().BeTrue();
         }
@@ -101,12 +112,15 @@ namespace DHaven.Faux.Test.ReturnTypes
             var service = Test.FauxReturn.Service;
 
             DiscoverySupport.Client = Test.MockRequest(request =>
-                    request.Method == HttpMethod.Get && request.RequestUri.ToString() == "http://return/123",
+                {
+                    request.Method.Should().BeEquivalentTo(HttpMethod.Get);
+                    request.RequestUri.ToString().Should().BeEquivalentTo("http://return/123");
+                },
                 new HttpResponseMessage(HttpStatusCode.OK)
                 {
                     Content = new StringContent("{Content: \"Hello World\", IsValid: true}", Encoding.UTF8,
                         "application/json"),
-                    Headers = { Location = new Uri("http://return/123")}
+                    Headers = { Location = new Uri("http://return/123") }
                 });
 
             var value = service.Get(123, out var location, out var mimeType);
@@ -116,5 +130,6 @@ namespace DHaven.Faux.Test.ReturnTypes
             mimeType.Should().StartWithEquivalent("application/json");
             location.Should().BeEquivalentTo("http://return/123");
         }
+
     }
 }

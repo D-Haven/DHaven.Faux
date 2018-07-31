@@ -19,6 +19,7 @@ using System.Text;
 using DHaven.Faux.HttpSupport;
 using Xunit;
 using FluentAssertions;
+using System;
 
 namespace DHaven.Faux.Test.HttpMethods
 {
@@ -28,7 +29,11 @@ namespace DHaven.Faux.Test.HttpMethods
         public void FauxGeneratesCallWithHttpGet()
         {
             DiscoverySupport.Client = Test.MockRequest(
-                req => req.Method == HttpMethod.Get && req.RequestUri.ToString() == "http://todo/",
+                req => 
+                {
+                    req.Method.Should().BeEquivalentTo(HttpMethod.Get);
+                    req.RequestUri.ToString().Should().BeEquivalentTo("http://todo/");
+                },
                 new HttpResponseMessage(HttpStatusCode.OK)
                 {
                     Content = new StringContent("[]", Encoding.UTF8, "application/json")
@@ -43,12 +48,37 @@ namespace DHaven.Faux.Test.HttpMethods
         public void FauxGeneratesDeleteWithPathValue()
         {
             DiscoverySupport.Client = Test.MockRequest(
-                req => req.Method == HttpMethod.Delete && req.RequestUri.ToString() == "http://todo/21",
+                req =>
+                {
+                    req.Method.Should().BeEquivalentTo(HttpMethod.Delete);
+                    req.RequestUri.ToString().Should().BeEquivalentTo("http://todo/21");
+                 },
                 new HttpResponseMessage(HttpStatusCode.NoContent));
             
             var service = Test.FauxTodo.Service;
 
             service.Delete(21);
+        }
+
+        [Fact]
+        public void FauxGeneratesPutWithObject()
+        {
+            DiscoverySupport.Client = Test.MockRequest(
+                req =>
+                {
+                    req.Method.Should().BeEquivalentTo(HttpMethod.Put);
+                    req.RequestUri.ToString().Should().BeEquivalentTo("http://todo/");
+                },
+                new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Headers = { Location = new Uri("http://todo/22") },
+                    Content = new StringContent("22")
+                });
+
+            var service = Test.FauxTodo.Service;
+
+            var id = service.Add("Another thing to do");
+            id.Should().Be(22);
         }
     }
 }

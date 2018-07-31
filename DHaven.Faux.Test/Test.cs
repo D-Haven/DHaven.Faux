@@ -14,9 +14,7 @@
 #endregion
 
 using System;
-using System.Linq.Expressions;
 using System.Net.Http;
-using System.Threading.Tasks;
 using DHaven.Faux.HttpSupport;
 using DHaven.Faux.Test.HttpMethods;
 using DHaven.Faux.Test.ReturnTypes;
@@ -37,12 +35,13 @@ namespace DHaven.Faux.Test
         public static readonly Faux<ITodoService> FauxTodo;
         public static readonly Faux<IReturnService> FauxReturn;
 
-        public static IHttpClient MockRequest(Expression<Func<HttpRequestMessage, bool>> verifyRequest,
+        public static IHttpClient MockRequest(Action<HttpRequestMessage> verifyRequest,
             HttpResponseMessage response)
         {
             var mockClient = new Mock<IHttpClient>();
 
-            mockClient.Setup(m => m.SendAsync(It.Is(verifyRequest))).Returns(Task.FromResult(response));
+            mockClient.Setup(m => m.SendAsync(It.IsAny<HttpRequestMessage>())).ReturnsAsync(response)
+                .Callback(verifyRequest);
 
             return mockClient.Object;
         }
