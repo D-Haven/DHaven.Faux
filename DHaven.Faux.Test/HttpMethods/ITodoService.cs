@@ -25,7 +25,7 @@ namespace DHaven.Faux.Test.HttpMethods
         IEnumerable<KeyValuePair<int,string>> List();
 
         [HttpGet("{id}")]
-        [return:ResponseHeader("Location")]
+        [return:Body]
         string Get([PathValue] int id);
 
         [HttpPut]

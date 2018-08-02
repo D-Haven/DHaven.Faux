@@ -19,6 +19,10 @@ using DHaven.Faux.HttpSupport;
 using DHaven.Faux.Test.HttpMethods;
 using DHaven.Faux.Test.ReturnTypes;
 using Moq;
+using Xunit;
+
+// Force single threaded execution for XUnit
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
 
 namespace DHaven.Faux.Test
 {
