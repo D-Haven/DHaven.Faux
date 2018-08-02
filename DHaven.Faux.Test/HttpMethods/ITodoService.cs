@@ -21,12 +21,15 @@ namespace DHaven.Faux.Test.HttpMethods
     public interface ITodoService
     {
         [HttpGet]
+        [return:Body]
         IEnumerable<KeyValuePair<int,string>> List();
 
         [HttpGet("{id}")]
+        [return:Body]
         string Get([PathValue] int id);
 
         [HttpPut]
+        [return:Body]
         int Add([Body] string todo);
 
         [HttpDelete("{id}")]

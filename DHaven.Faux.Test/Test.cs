@@ -14,22 +14,38 @@
 #endregion
 
 using System;
-using System.Linq.Expressions;
 using System.Net.Http;
-using System.Threading.Tasks;
 using DHaven.Faux.HttpSupport;
+using DHaven.Faux.Test.HttpMethods;
+using DHaven.Faux.Test.ReturnTypes;
 using Moq;
+using Xunit;
+
+// Force single threaded execution for XUnit
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
 
 namespace DHaven.Faux.Test
 {
     public static class Test
     {
-        public static IHttpClient MockRequest(Expression<Func<HttpRequestMessage, bool>> verifyRequest,
+        static Test()
+        {
+            Compiler.WebServiceClassGenerator.OutputSourceFiles = true;
+            Compiler.WebServiceClassGenerator.SourceFilePath = "./dhaven-faux";
+            FauxTodo = new Faux<ITodoService>();
+            FauxReturn = new Faux<IReturnService>();
+        }
+        
+        public static readonly Faux<ITodoService> FauxTodo;
+        public static readonly Faux<IReturnService> FauxReturn;
+
+        public static IHttpClient MockRequest(Action<HttpRequestMessage> verifyRequest,
             HttpResponseMessage response)
         {
             var mockClient = new Mock<IHttpClient>();
 
-            mockClient.Setup(m => m.SendAsync(It.Is(verifyRequest))).Returns(Task.FromResult(response));
+            mockClient.Setup(m => m.SendAsync(It.IsAny<HttpRequestMessage>())).ReturnsAsync(response)
+                .Callback(verifyRequest);
 
             return mockClient.Object;
         }

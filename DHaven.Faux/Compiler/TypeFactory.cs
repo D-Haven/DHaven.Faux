@@ -55,14 +55,22 @@ namespace DHaven.Faux.Compiler
                 return;
             }
 
-            Logger.LogInformation("Compiling and loading type assembly in memory.");
-            using (var stream = new MemoryStream())
+            lock (EmptyTypes)
             {
-                Compiler.Compile(stream, Path.GetRandomFileName());
-                stream.Seek(0, SeekOrigin.Begin);
-                generatedAssembly = AssemblyLoadContext.Default.LoadFromStream(stream);
+                if (generatedAssembly != null)
+                {
+                    return;
+                }
+
+                Logger.LogInformation("Compiling and loading type assembly in memory.");
+                using (var stream = new MemoryStream())
+                {
+                    Compiler.Compile(stream, Path.GetRandomFileName());
+                    stream.Seek(0, SeekOrigin.Begin);
+                    generatedAssembly = AssemblyLoadContext.Default.LoadFromStream(stream);
+                }
             }
-                
+
             Debug.Assert(generatedAssembly != null);
         }
     }

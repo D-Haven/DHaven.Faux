@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -155,7 +156,7 @@ namespace DHaven.Faux.Compiler
             var attribute = method.GetCustomAttribute<HttpMethodAttribute>();
 
             classBuilder.Append($" {method.Name}(");
-            classBuilder.Append(string.Join(", ", method.GetParameters().Select(p => $"{ToCompilableName(p.ParameterType)} {p.Name}")));
+            classBuilder.Append(string.Join(", ", method.GetParameters().Select(p => $"{ToCompilableName(p.ParameterType, p.IsOut)} {p.Name}")));
             classBuilder.AppendLine(")");
             classBuilder.AppendLine("        {");
             classBuilder.AppendLine("            var 仮variables = new System.Collections.Generic.Dictionary<string,object>();");
@@ -205,7 +206,7 @@ namespace DHaven.Faux.Compiler
 
             foreach (var entry in responseHeaders)
             {
-                classBuilder.AppendLine($"            {entry.Value.Name} = GetHeaderValue<{ToCompilableName(returnType)}>(仮response, \"{entry.Key}\");");
+                classBuilder.AppendLine($"            {entry.Value.Name} = GetHeaderValue<{ToCompilableName(entry.Value.ParameterType)}>(仮response, \"{entry.Key}\");");
             }
 
             if (!isVoid)
@@ -242,9 +243,23 @@ namespace DHaven.Faux.Compiler
             return $"System.Net.Http.HttpMethod.{value}";
         }
 
+        internal static string ToCompilableName(Type type, bool isOut)
+        {
+            var name = ToCompilableName(type);
+
+            return !isOut ? name : $"out {name}";
+        }
+
         internal static string ToCompilableName(Type type)
         {
             var baseName = type.FullName;
+            Debug.Assert(baseName != null, nameof(baseName) + " != null");
+            
+            // If we have a ref or an out parameter, then Type.Name appends '&' to the end.
+            if (baseName.EndsWith("&"))
+            {
+                baseName = baseName.Substring(0, baseName.Length - 1);
+            }
 
             if (!type.IsConstructedGenericType)
             {
