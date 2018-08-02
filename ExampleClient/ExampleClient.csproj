@@ -6,10 +6,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="coffee.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="coffee.jpg" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,5 +1,5 @@
-﻿#region Copyright 2017 D-Haven.org
-
+﻿#region Copyright 2018 D-Haven.org
+// 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -11,25 +11,28 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 #endregion
 
-using System.Reflection;
-using DHaven.Faux.Compiler;
+using System.Collections.Generic;
 
-namespace DHaven.Faux
+namespace DHaven.Faux.Test.HttpMethods
 {
-    public class Faux<TService>
-        where TService : class // Really an interface
+    [FauxClient("todo")]
+    public interface ITodoService
     {
-        private readonly string className;
-        private TService service;
+        [HttpGet]
+        [return:Body]
+        IEnumerable<KeyValuePair<int,string>> List();
 
-        public Faux()
-        {
-            className = TypeFactory.Compiler.RegisterInterface(typeof(TService).GetTypeInfo());
-        }
+        [HttpGet("{id}")]
+        [return:Body]
+        string Get([PathValue] int id);
 
-        public TService Service => service ?? (service = TypeFactory.CreateInstance<TService>(className));
+        [HttpPut]
+        [return:Body]
+        int Add([Body] string todo);
+
+        [HttpDelete("{id}")]
+        void Delete([PathValue] int id);
     }
 }

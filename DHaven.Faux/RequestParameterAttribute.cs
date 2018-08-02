@@ -9,11 +9,11 @@ namespace DHaven.Faux
     [AttributeUsage(AttributeTargets.Parameter)]
     public class RequestParameterAttribute : Attribute
     {
-        public RequestParameterAttribute(string paramName)
+        public RequestParameterAttribute(string paramName = null)
         {
             Parameter = paramName;
         }
 
-        public string Parameter { get; private set; }
+        public string Parameter { get; }
     }
 }

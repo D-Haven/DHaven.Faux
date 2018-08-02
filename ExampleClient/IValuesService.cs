@@ -9,7 +9,7 @@ namespace ExampleClient
     public interface IValuesService
     {
         [HttpGet]
-        Task<IEnumerable<string>> Get();
+        Task<IEnumerable<string>> Get([RequestParameter] int page, [RequestParameter("page-size")] int size);
 
         [HttpGet("{id}")]
         Task<string> Get([PathValue] int id);

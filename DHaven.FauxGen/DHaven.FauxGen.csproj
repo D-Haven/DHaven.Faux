@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Berin Loritsch</Authors>
+    <Company>DHaven.Faux</Company>
+    <Description>Command line tool to generate assemblies so that they are not created at runtime.  Allows for some customization of the generated code.</Description>
+    <Copyright>Copyright 2018 by D-Haven.org</Copyright>
+    <PackageLicenseUrl>https://github.com/bloritsch/DHaven.Faux/blob/develop/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/bloritsch/DHaven.Faux</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/bloritsch/DHaven.Faux</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
+    <PackageTags>webservice client generator</PackageTags>
+    <RootNamespace>DHaven.FauxGen</RootNamespace>
+    <StartupObject>DHaven.FauxGen.Program</StartupObject>
+    <AssemblyName>FauxGen</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="commandlineparser" Version="2.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DHaven.Faux\DHaven.Faux.csproj" />
+  </ItemGroup>
+
+</Project>

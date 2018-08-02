@@ -1,4 +1,4 @@
-﻿#region Copyright 2017 D-Haven.org
+﻿#region Copyright 2018 D-Haven.org
 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,22 +14,21 @@
 
 #endregion
 
-using System.Reflection;
-using DHaven.Faux.Compiler;
+using System.Net.Http;
+using System.Threading.Tasks;
 
-namespace DHaven.Faux
+namespace DHaven.Faux.HttpSupport
 {
-    public class Faux<TService>
-        where TService : class // Really an interface
+    /// <summary>
+    /// Allows the global HttpClient to be global
+    /// </summary>
+    public interface IHttpClient
     {
-        private readonly string className;
-        private TService service;
-
-        public Faux()
-        {
-            className = TypeFactory.Compiler.RegisterInterface(typeof(TService).GetTypeInfo());
-        }
-
-        public TService Service => service ?? (service = TypeFactory.CreateInstance<TService>(className));
+        /// <summary>
+        /// Send the Http request and asynchronously get a response.
+        /// </summary>
+        /// <param name="message">the request</param>
+        /// <returns>the HttpResponse</returns>
+        Task<HttpResponseMessage> SendAsync(HttpRequestMessage message);
     }
 }

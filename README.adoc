@@ -30,12 +30,12 @@ namespace Fortune_Teller_UI.Services
     [Route("api/fortunes")]
     public interface IFortuneService
     {
-	    // GET api/fortunes
-	    [HttpGet]
+        // GET api/fortunes
+        [HttpGet]
         Task<IEnumerable<Fortune>> Get();
 
-	    // GET api/fortunes/random
-	    [HttpGet("random")]
+        // GET api/fortunes/random
+        [HttpGet("random")]
         public Fortune Random();
     }
 }
@@ -47,10 +47,42 @@ a standard CSharp object.  (Appologies to Steeltoe, I adapted their starter exam
 
 == What does DHaven.Faux do right now?
 
-It can generate simple APIs for JSon bound REST services (like the example above),
-and use a Eureka discovery server to look up the real location of the web service
-for you.  It's also smart enough to use the async ready typed Task response values.
-Basically the interface in the above example is fully supported.
+The foundation is laid to support all the attributes defined in the project.  If something
+isn't working, please write up an issue.  Feel free to contribute.
 
 NOTE: it is important that the objects you use in your interface are objects that
 NewtonSoft.JSon knows how to serialize. 
+
+== Generated Classes
+
+If you want to enable looking at the generated source code for your implementation,
+you will need to add the following to your appsettings.json file:
+
+----
+{
+  "faux": {
+    "debug": {
+      "outputSource": true,
+      "sourcePath": "./faux-generated"
+    }
+  }
+}
+----
+
+* outputSource: true to write the generated classes to the file system
+* sourcePath: path to the directory you want the generated classes placed
+
+To prevent naming conflicts between your parameters and internal Faux code,
+all Faux variables are prefixed with the Kanji 仮 (kari).  Kari is word
+that means "temporary".  When it's used as a prefix it also means "fake".
+It seemed fitting to use that particular character with English to represent
+internal variables in this project.
+
+== Contributing
+
+Please add issues if there any problems, questions, or feature requests.
+
+To contribute code, link:https://www.clahub.com/agreements/bloritsch/DHaven.Faux[sign the Contributor License Agreement].
+
+We need the CLA to protect the project and to protect you from legal implications.
+Feel free to fork, make changes, and provide pull requests.
