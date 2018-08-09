@@ -21,7 +21,11 @@ using DHaven.Faux.Test.ReturnTypes;
 using Moq;
 using Xunit;
 
-// Force single threaded execution for XUnit
+// Force single threaded execution for XUnit.  While the app itself
+// is threadsafe, we have to share the global reference for the HttpClient.
+// That's due to the way that HttpClient is designed to work.  Since the
+// tests mock the IHttpClient and add validations, we don't want the test
+// to fail just because 2 of them are running at the same time.
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
 namespace DHaven.Faux.Test
@@ -44,7 +48,8 @@ namespace DHaven.Faux.Test
         {
             var mockClient = new Mock<IHttpClient>();
 
-            mockClient.Setup(m => m.SendAsync(It.IsAny<HttpRequestMessage>())).ReturnsAsync(response)
+            mockClient.Setup(m => m.SendAsync(It.IsAny<HttpRequestMessage>()))
+                .ReturnsAsync(response)
                 .Callback(verifyRequest);
 
             return mockClient.Object;
