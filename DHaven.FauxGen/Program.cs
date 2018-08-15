@@ -26,6 +26,7 @@ namespace DHaven.FauxGen
             WebServiceClassGenerator.RootNamespace = opts.RootNameSapce ?? WebServiceClassGenerator.RootNamespace;
             WebServiceClassGenerator.OutputSourceFiles = opts.OutputSourceCode;
             WebServiceClassGenerator.SourceFilePath = opts.OutputSourcePath ?? WebServiceClassGenerator.SourceFilePath;
+            WebServiceClassGenerator.GenerateSealedClasses = !opts.UseUnsealedClasses;
 
             foreach (var iface in assembly.GetExportedTypes())
             {
