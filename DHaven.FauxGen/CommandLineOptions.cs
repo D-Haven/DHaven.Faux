@@ -22,5 +22,10 @@ namespace DHaven.FauxGen
         
         [Option('s', "source-path", Required = false, HelpText = "Override the directory to write the generated source to.  Defaults to './dhaven-faux'")]
         public string OutputSourcePath { get; set; }
+        
+        // For booleans, they default to false and their presence makes it true.  That's why this is for unsealed which
+        // is opposite of the default behavior.
+        [Option('u', "unsealed", HelpText = "Generate classes that are not sealed.  They are sealed by default.")]
+        public bool UseUnsealedClasses { get; set; }
     }
 }
