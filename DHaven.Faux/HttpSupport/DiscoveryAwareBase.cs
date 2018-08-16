@@ -59,12 +59,12 @@ namespace DHaven.Faux.HttpSupport
             return new HttpRequestMessage(method, serviceUri);
         }
 
-        protected HttpResponseMessage Invoke(HttpRequestMessage message)
+        protected static HttpResponseMessage Invoke(HttpRequestMessage message)
         {
             return InvokeAsync(message).Result;
         }
 
-        protected async Task<HttpResponseMessage> InvokeAsync(HttpRequestMessage message)
+        protected static async Task<HttpResponseMessage> InvokeAsync(HttpRequestMessage message)
         {
             var response = await DiscoverySupport.Client.SendAsync(message);
 
@@ -77,13 +77,13 @@ namespace DHaven.Faux.HttpSupport
             return response;
         }
 
-        protected StringContent ConvertToJson(object data)
+        protected static StringContent ConvertToJson(object data)
         {
             var json = JsonConvert.SerializeObject(data);
             return  new StringContent(json, Encoding.UTF8, "application/json");
         }
 
-        protected StreamContent StreamRawContent(Stream stream)
+        protected static StreamContent StreamRawContent(Stream stream)
         {
             return new StreamContent(stream);
         }
@@ -93,7 +93,7 @@ namespace DHaven.Faux.HttpSupport
             return ConvertToObjectAsync<TResponse>(responseMessage).Result;
         }
 
-        protected T GetHeaderValue<T>(HttpResponseMessage responseMessage, string headerName)
+        protected static T GetHeaderValue<T>(HttpResponseMessage responseMessage, string headerName)
         {
             // Because Microsoft.  Y U so stupid?
             var value = headerName.StartsWith("Content-") 
@@ -108,7 +108,7 @@ namespace DHaven.Faux.HttpSupport
             return JsonConvert.DeserializeObject<T>(value);
         }
 
-        protected async Task<TResponse> ConvertToObjectAsync<TResponse>(HttpResponseMessage responseMessage)
+        protected static async Task<TResponse> ConvertToObjectAsync<TResponse>(HttpResponseMessage responseMessage)
         {
             return responseMessage.StatusCode == HttpStatusCode.NoContent
                 ? default(TResponse)
