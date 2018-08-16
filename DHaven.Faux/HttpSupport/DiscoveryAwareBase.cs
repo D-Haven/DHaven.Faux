@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -33,11 +34,12 @@ namespace DHaven.Faux.HttpSupport
     /// path values, etc.
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class DiscoveryAwareBase
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    public abstract class DiscoveryAwareBase
     {
         private readonly Uri baseUri;
 
-        public DiscoveryAwareBase(string serviceName, string baseRoute)
+        protected DiscoveryAwareBase(string serviceName, string baseRoute)
         {
             var uriString = $"http://{serviceName}/{baseRoute}/";
 
@@ -108,12 +110,9 @@ namespace DHaven.Faux.HttpSupport
 
         protected async Task<TResponse> ConvertToObjectAsync<TResponse>(HttpResponseMessage responseMessage)
         {
-            if(responseMessage.StatusCode == HttpStatusCode.NoContent)
-            {
-                return default(TResponse);
-            }
-
-            return JsonConvert.DeserializeObject<TResponse>(await responseMessage.Content.ReadAsStringAsync());
+            return responseMessage.StatusCode == HttpStatusCode.NoContent
+                ? default(TResponse)
+                : JsonConvert.DeserializeObject<TResponse>(await responseMessage.Content.ReadAsStringAsync());
         }
 
         private Uri GetServiceUri(string endPoint, IDictionary<string, object> variables, IDictionary<string,string> requestParameters)

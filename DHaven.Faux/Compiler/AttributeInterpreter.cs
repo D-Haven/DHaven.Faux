@@ -85,6 +85,8 @@ namespace DHaven.Faux.Compiler
                 format = typeof(Stream).IsAssignableFrom(bodyParam.ParameterType) ? Format.Raw : Format.Json;
             }
 
+            // Format.Auto is handled above.  At this point it is always Format.Raw or Format.Json
+            // ReSharper disable once SwitchStatementMissingSomeCases
             switch (format)
             {
                 case Format.Json:
@@ -114,6 +116,8 @@ namespace DHaven.Faux.Compiler
                 format = typeof(Stream).IsAssignableFrom(returnType) ? Format.Raw : Format.Json;
             }
 
+            // The Format.Auto is handled above, since it will always be Raw or Json at this point
+            // ReSharper disable once SwitchStatementMissingSomeCases
             switch (format)
             {
                 case Format.Json:
@@ -147,6 +151,7 @@ namespace DHaven.Faux.Compiler
             classBuilder.AppendLine($"            仮reqParams.Add(\"{paramName}\", {parameter.Name}{(parameter.ParameterType.IsClass ? "?" : "")}.ToString());");
         }
 
+        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
         internal static void InterpretResponseHeaderInParameters(ParameterInfo parameter, bool isAsync, ref Dictionary<string,ParameterInfo> responseHeaders)
         {
             var responseAttribute = parameter.GetCustomAttribute<ResponseHeaderAttribute>();

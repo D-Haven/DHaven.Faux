@@ -55,10 +55,12 @@ namespace DHaven.Faux.Compiler
 
         public static string SourceFilePath { get; set; }
 
+        // ReSharper disable once MemberCanBePrivate.Global
         public static bool OutputSourceFiles { get; set; }
 
         public static string RootNamespace { get; set; } = "DHaven.Feign.Wrapper";
 
+        // ReSharper disable once MemberCanBePrivate.Global
         public static bool GenerateSealedClasses { get; set; } = true;
 
         public static string GenerateSource(TypeInfo typeInfo, out string fullClassName)
@@ -246,7 +248,7 @@ namespace DHaven.Faux.Compiler
             return $"System.Net.Http.HttpMethod.{value}";
         }
 
-        internal static string ToCompilableName(Type type, bool isOut)
+        private static string ToCompilableName(Type type, bool isOut)
         {
             var name = ToCompilableName(type);
 
@@ -269,7 +271,7 @@ namespace DHaven.Faux.Compiler
                 return baseName;
             }
 
-            baseName = baseName?.Substring(0, baseName.IndexOf('`'));
+            baseName = baseName.Substring(0, baseName.IndexOf('`'));
             return $"{baseName}<{string.Join(",", type.GetGenericArguments().Select(ToCompilableName))}>";
         }        
     }
