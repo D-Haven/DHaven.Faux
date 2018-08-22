@@ -2,6 +2,7 @@
 
 namespace DHaven.Faux
 {
+    /// <inheritdoc />
     /// <summary>
     /// Mark the relative route to find the service.  Use this if you
     /// are not using a discovery service.
@@ -14,6 +15,6 @@ namespace DHaven.Faux
             BaseRoute = baseRoute ?? string.Empty;
         }
 
-        public string BaseRoute { get; set; }
+        public string BaseRoute { get; }
     }
 }

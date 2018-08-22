@@ -2,6 +2,7 @@
 
 namespace DHaven.Faux
 {
+    /// <inheritdoc />
     /// <summary>
     /// The value of the method parameter marked with this attribute will
     /// be be applied to the specified parameter name.

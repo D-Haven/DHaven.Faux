@@ -2,6 +2,7 @@
 
 namespace DHaven.Faux
 {
+    /// <inheritdoc />
     /// <summary>
     /// The out parameter or return value marked with this attribute will be assigned
     /// the value from the response.

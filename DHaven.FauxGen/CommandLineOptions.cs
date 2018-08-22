@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace DHaven.FauxGen
 {

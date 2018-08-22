@@ -24,7 +24,7 @@ namespace ExampleApi.Controllers
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
-            if (values.TryGetValue(id, out string value))
+            if (values.TryGetValue(id, out var value))
             {
                 return Ok(value);
             }
@@ -52,13 +52,14 @@ namespace ExampleApi.Controllers
         [HttpPut("{id}")]
         public IActionResult Put(int id, [FromBody]string value)
         {
-            if (values.TryGetValue(id, out string oldValue))
+            if (!values.TryGetValue(id, out _))
             {
-                values[id] = value;
-                return Ok(value);
+                return NotFound();
             }
 
-            return NotFound();
+            values[id] = value;
+            return Ok(value);
+
         }
 
         // DELETE api/values/5

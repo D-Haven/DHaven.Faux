@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -33,11 +34,12 @@ namespace DHaven.Faux.HttpSupport
     /// path values, etc.
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class DiscoveryAwareBase
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    public abstract class DiscoveryAwareBase
     {
         private readonly Uri baseUri;
 
-        public DiscoveryAwareBase(string serviceName, string baseRoute)
+        protected DiscoveryAwareBase(string serviceName, string baseRoute)
         {
             var uriString = $"http://{serviceName}/{baseRoute}/";
 
@@ -57,12 +59,12 @@ namespace DHaven.Faux.HttpSupport
             return new HttpRequestMessage(method, serviceUri);
         }
 
-        protected HttpResponseMessage Invoke(HttpRequestMessage message)
+        protected static HttpResponseMessage Invoke(HttpRequestMessage message)
         {
             return InvokeAsync(message).Result;
         }
 
-        protected async Task<HttpResponseMessage> InvokeAsync(HttpRequestMessage message)
+        protected static async Task<HttpResponseMessage> InvokeAsync(HttpRequestMessage message)
         {
             var response = await DiscoverySupport.Client.SendAsync(message);
 
@@ -75,13 +77,13 @@ namespace DHaven.Faux.HttpSupport
             return response;
         }
 
-        protected StringContent ConvertToJson(object data)
+        protected static StringContent ConvertToJson(object data)
         {
             var json = JsonConvert.SerializeObject(data);
             return  new StringContent(json, Encoding.UTF8, "application/json");
         }
 
-        protected StreamContent StreamRawContent(Stream stream)
+        protected static StreamContent StreamRawContent(Stream stream)
         {
             return new StreamContent(stream);
         }
@@ -91,7 +93,7 @@ namespace DHaven.Faux.HttpSupport
             return ConvertToObjectAsync<TResponse>(responseMessage).Result;
         }
 
-        protected T GetHeaderValue<T>(HttpResponseMessage responseMessage, string headerName)
+        protected static T GetHeaderValue<T>(HttpResponseMessage responseMessage, string headerName)
         {
             // Because Microsoft.  Y U so stupid?
             var value = headerName.StartsWith("Content-") 
@@ -106,14 +108,11 @@ namespace DHaven.Faux.HttpSupport
             return JsonConvert.DeserializeObject<T>(value);
         }
 
-        protected async Task<TResponse> ConvertToObjectAsync<TResponse>(HttpResponseMessage responseMessage)
+        protected static async Task<TResponse> ConvertToObjectAsync<TResponse>(HttpResponseMessage responseMessage)
         {
-            if(responseMessage.StatusCode == HttpStatusCode.NoContent)
-            {
-                return default(TResponse);
-            }
-
-            return JsonConvert.DeserializeObject<TResponse>(await responseMessage.Content.ReadAsStringAsync());
+            return responseMessage.StatusCode == HttpStatusCode.NoContent
+                ? default(TResponse)
+                : JsonConvert.DeserializeObject<TResponse>(await responseMessage.Content.ReadAsStringAsync());
         }
 
         private Uri GetServiceUri(string endPoint, IDictionary<string, object> variables, IDictionary<string,string> requestParameters)

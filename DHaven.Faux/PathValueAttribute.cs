@@ -2,6 +2,7 @@
 
 namespace DHaven.Faux
 {
+    /// <inheritdoc />
     /// <summary>
     /// Used to mark the method parameter as the value for the path
     /// variable in the HttpMethodAttribute.

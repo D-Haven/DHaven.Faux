@@ -7,7 +7,7 @@ namespace ExampleClient
 {
     internal class Program
     {
-        private static void Main(string[] args)
+        private static void Main()
         {
             var wrapper = new Faux<IValuesService>();
             var blobWrapper = new Faux<IBlobService>();

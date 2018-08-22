@@ -2,6 +2,7 @@
 
 namespace DHaven.Faux
 {
+    /// <inheritdoc />
     /// <summary>
     /// Marks a service with it's name.  Use this with a discovery
     /// service.
@@ -14,6 +15,6 @@ namespace DHaven.Faux
             Name = name;
         }
 
-        public string Name { get; private set; }
+        public string Name { get; }
     }
 }

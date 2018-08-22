@@ -3,6 +3,7 @@ using System.Net.Http;
 
 namespace DHaven.Faux
 {
+    /// <inheritdoc />
     /// <summary>
     /// Make a PUT service call.
     /// </summary>
