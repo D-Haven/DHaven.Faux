@@ -2,6 +2,8 @@
 
 image:https://badges.gitter.im/DHaven-Faux/Lobby.svg[link="https://gitter.im/DHaven-Faux/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"]
 
+image:https://ci.appveyor.com/api/projects/status/3g77q1gu23cbsfu3?svg=true[link="https://ci.appveyor.com/project/bloritsch/dhaven-faux"]
+
 NetFlix created a bunch of really useful cloud projects, all of which are Java based.
 Steeltoe OSS has made service discovery and a few other integrations available to the
 Dotnet community.  One glaring missing feature is an analog for Feign.  This library
