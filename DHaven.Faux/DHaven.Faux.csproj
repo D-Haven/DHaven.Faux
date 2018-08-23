@@ -21,6 +21,7 @@
     <PackageReference Include="microsoft.extensions.logging.debug" Version="2.0.1" />
     <PackageReference Include="newtonsoft.json" Version="10.0.3" />
     <PackageReference Include="steeltoe.discovery.client" Version="1.1.0" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.1" />
     <PackageReference Include="system.runtime.loader" Version="4.3.0" />
   </ItemGroup>
 </Project>
