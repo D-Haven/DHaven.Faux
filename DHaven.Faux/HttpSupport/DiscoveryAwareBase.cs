@@ -41,6 +41,12 @@ namespace DHaven.Faux.HttpSupport
 
         protected DiscoveryAwareBase(string serviceName, string baseRoute)
         {
+            // Strip leading slashes so that the base URI is assembled correctly
+            if (baseRoute.StartsWith("/"))
+            {
+                baseRoute = baseRoute.Substring(1);
+            }
+            
             var uriString = $"http://{serviceName}/{baseRoute}/";
 
             // Handle when there is no base route, but there is a service name.
@@ -131,6 +137,11 @@ namespace DHaven.Faux.HttpSupport
             if (query.Length > 0)
             {
                 endPoint += query.ToString();
+            }
+
+            if (endPoint.StartsWith("/"))
+            {
+                endPoint = endPoint.Substring(1);
             }
 
             return new Uri(baseUri, endPoint);

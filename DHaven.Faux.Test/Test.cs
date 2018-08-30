@@ -17,6 +17,7 @@ using System;
 using System.Net.Http;
 using DHaven.Faux.HttpSupport;
 using DHaven.Faux.Test.HttpMethods;
+using DHaven.Faux.Test.ParameterTypes;
 using DHaven.Faux.Test.ReturnTypes;
 using Moq;
 using Xunit;
@@ -38,10 +39,12 @@ namespace DHaven.Faux.Test
             Compiler.WebServiceClassGenerator.SourceFilePath = "./dhaven-faux";
             FauxTodo = new Faux<ITodoService>();
             FauxReturn = new Faux<IReturnService>();
+            FauxBlob = new Faux<IBlobStore>();
         }
         
         public static readonly Faux<ITodoService> FauxTodo;
         public static readonly Faux<IReturnService> FauxReturn;
+        public static readonly Faux<IBlobStore> FauxBlob;
 
         public static IHttpClient MockRequest(Action<HttpRequestMessage> verifyRequest,
             HttpResponseMessage response)

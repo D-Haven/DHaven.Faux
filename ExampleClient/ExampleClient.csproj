@@ -18,10 +18,8 @@
     <EmbeddedResource Remove="faux-generated\**" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="DHaven.Faux" Version="1.0.0" />
     <PackageReference Include="steeltoe.discovery.client" Version="1.1.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DHaven.Faux\DHaven.Faux.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="faux-generated\**" />
