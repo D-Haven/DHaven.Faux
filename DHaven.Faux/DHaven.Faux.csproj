@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;NET461</TargetFrameworks>
     <Authors>Berin Loritsch</Authors>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Description>DotNet implementation of NetFlix Feign (https://github.com/OpenFeign/feign).  Integrates with Microsoft DependencyInjection to generate the wrapper code from an interface representing a Rest end point.</Description>

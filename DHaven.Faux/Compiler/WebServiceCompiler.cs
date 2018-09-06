@@ -35,7 +35,7 @@ namespace DHaven.Faux.Compiler
 
         private readonly ILogger<WebServiceCompiler> logger =
             DiscoverySupport.LogFactory.CreateLogger<WebServiceCompiler>();
-
+        public static List<string> CodeSources = new List<string>();
         public WebServiceCompiler()
         {
             UpdateReferences(GetType().GetTypeInfo().Assembly);
@@ -47,6 +47,7 @@ namespace DHaven.Faux.Compiler
             
             UpdateReferences(type.Assembly);
             var sourceCode = WebServiceClassGenerator.GenerateSource(type, out var fullyQualifiedClassName);
+            CodeSources.Add(sourceCode);
             syntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(sourceCode));
             
             logger.LogDebug($"Finished compiling the syntax tree for {fullyQualifiedClassName} generated from {type.FullName}");

@@ -13,13 +13,17 @@
 // limitations under the License.
 #endregion
 
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using System.Runtime.Loader;
 using DHaven.Faux.HttpSupport;
 using Microsoft.Extensions.Logging;
+using System;
+using System.CodeDom.Compiler;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Loader;
+using Microsoft.CSharp;
 
 namespace DHaven.Faux.Compiler
 {
@@ -29,7 +33,10 @@ namespace DHaven.Faux.Compiler
         private static readonly object[] EmptyParams = new object[0];
         private static readonly ILogger Logger;
         private static Assembly generatedAssembly;
-
+        private static HashSet<string> assemblies = new HashSet<string>()
+        {
+            "System.Net.Http.dll"
+        };
         static TypeFactory()
         {
             Logger = DiscoverySupport.LogFactory.CreateLogger(typeof(TypeFactory));
@@ -40,37 +47,42 @@ namespace DHaven.Faux.Compiler
         internal static TService CreateInstance<TService>(string className)
             where TService : class // really interface
         {
-            EnsureAssemblyIsGenerated();
-            
+            var typeInfo = typeof(TService);
+            EnsureAssemblyIsGenerated(typeInfo);
+
             var type = generatedAssembly?.GetType(className);
             var constructor = type?.GetConstructor(EmptyTypes);
             return constructor?.Invoke(EmptyParams) as TService;
         }
-                
-        private static void EnsureAssemblyIsGenerated()
-        {
-            // Delay until all services have been registered first.
-            if (generatedAssembly != null)
-            {
-                return;
-            }
 
+        private static void EnsureAssemblyIsGenerated(Type teType)
+        {
             lock (EmptyTypes)
             {
-                if (generatedAssembly != null)
-                {
-                    return;
-                }
-
                 Logger.LogInformation("Compiling and loading type assembly in memory.");
+
+#if !NETSTANDARD
+                CSharpCodeProvider objCSharpCodeProvider = new CSharpCodeProvider();
+                ICodeCompiler objICodeCompiler = objCSharpCodeProvider.CreateCompiler();
+                CompilerParameters objCompilerParameters = new CompilerParameters();
+                var entryAssembly=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,Path.GetFileName(teType.Assembly.CodeBase));
+                assemblies.Add(entryAssembly);
+                assemblies.Add(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DHaven.Faux.dll"));
+                objCompilerParameters.ReferencedAssemblies.AddRange(assemblies.ToArray());
+                objCompilerParameters.GenerateExecutable = false;
+                objCompilerParameters.GenerateInMemory = true;
+                CompilerResults cr = objICodeCompiler.CompileAssemblyFromSourceBatch(objCompilerParameters, WebServiceCompiler.CodeSources.ToArray());
+                generatedAssembly = cr.CompiledAssembly;
+#endif
+#if NETSTANDARD
                 using (var stream = new MemoryStream())
                 {
                     Compiler.Compile(stream, Path.GetRandomFileName());
                     stream.Seek(0, SeekOrigin.Begin);
                     generatedAssembly = AssemblyLoadContext.Default.LoadFromStream(stream);
                 }
+#endif
             }
-
             Debug.Assert(generatedAssembly != null);
         }
     }
