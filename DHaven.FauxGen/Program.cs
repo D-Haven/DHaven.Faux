@@ -36,10 +36,7 @@ namespace DHaven.FauxGen
                 }
             }
 
-            using (var stream = new FileStream(outputAssembly, FileMode.Create))
-            {
-                compiler.Compile(stream, Path.GetFileName(outputAssembly));
-            }
+            compiler.Compile(outputAssembly);
         }
     }
 }
