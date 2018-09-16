@@ -17,7 +17,7 @@
     <AssemblyName>FauxGen</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="commandlineparser" Version="2.2.1" />
+    <PackageReference Include="commandlineparser" Version="2.3.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DHaven.Faux\DHaven.Faux.csproj" />

@@ -13,13 +13,11 @@
 // limitations under the License.
 #endregion
 
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using System.Runtime.Loader;
 using DHaven.Faux.HttpSupport;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace DHaven.Faux.Compiler
 {
@@ -40,16 +38,16 @@ namespace DHaven.Faux.Compiler
         internal static TService CreateInstance<TService>(string className)
             where TService : class // really interface
         {
+            var typeInfo = typeof(TService);
             EnsureAssemblyIsGenerated();
-            
+
             var type = generatedAssembly?.GetType(className);
             var constructor = type?.GetConstructor(EmptyTypes);
             return constructor?.Invoke(EmptyParams) as TService;
         }
-                
+
         private static void EnsureAssemblyIsGenerated()
         {
-            // Delay until all services have been registered first.
             if (generatedAssembly != null)
             {
                 return;
@@ -57,20 +55,16 @@ namespace DHaven.Faux.Compiler
 
             lock (EmptyTypes)
             {
-                if (generatedAssembly != null)
+                if(generatedAssembly != null)
                 {
                     return;
                 }
 
                 Logger.LogInformation("Compiling and loading type assembly in memory.");
-                using (var stream = new MemoryStream())
-                {
-                    Compiler.Compile(stream, Path.GetRandomFileName());
-                    stream.Seek(0, SeekOrigin.Begin);
-                    generatedAssembly = AssemblyLoadContext.Default.LoadFromStream(stream);
-                }
-            }
 
+                generatedAssembly = Compiler.Compile(null);
+            }
+            
             Debug.Assert(generatedAssembly != null);
         }
     }

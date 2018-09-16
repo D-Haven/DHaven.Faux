@@ -19,7 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="DHaven.Faux" Version="1.0.0" />
-    <PackageReference Include="steeltoe.discovery.client" Version="1.1.0" />
+    <PackageReference Include="Steeltoe.Discovery.Client" Version="1.1.0" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="faux-generated\**" />
