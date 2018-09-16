@@ -48,8 +48,18 @@ namespace DHaven.Faux.Compiler
 
         private static void EnsureAssemblyIsGenerated()
         {
+            if (generatedAssembly != null)
+            {
+                return;
+            }
+
             lock (EmptyTypes)
             {
+                if(generatedAssembly != null)
+                {
+                    return;
+                }
+
                 Logger.LogInformation("Compiling and loading type assembly in memory.");
 
                 generatedAssembly = Compiler.Compile(null);
