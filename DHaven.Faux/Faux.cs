@@ -14,7 +14,6 @@
 
 #endregion
 
-using System.Reflection;
 using DHaven.Faux.Compiler;
 
 namespace DHaven.Faux
@@ -27,7 +26,7 @@ namespace DHaven.Faux
 
         public Faux()
         {
-            className = TypeFactory.Compiler.RegisterInterface(typeof(TService).GetTypeInfo());
+            className = TypeFactory.RegisterInterface<TService>();
         }
 
         public TService Service => service ?? (service = TypeFactory.CreateInstance<TService>(className));

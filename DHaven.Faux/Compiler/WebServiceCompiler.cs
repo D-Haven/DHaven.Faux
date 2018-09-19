@@ -28,6 +28,7 @@ namespace DHaven.Faux.Compiler
     public partial class WebServiceCompiler
     {
         private readonly ISet<string> references = new HashSet<string>();
+        private readonly IDictionary<TypeInfo,string> registeredTypes = new Dictionary<TypeInfo,string>();
 
         private readonly ILogger<WebServiceCompiler> logger =
             DiscoverySupport.LogFactory.CreateLogger<WebServiceCompiler>();
@@ -44,12 +45,21 @@ namespace DHaven.Faux.Compiler
             UpdateReferences(GetType().GetTypeInfo().Assembly);
         }
 
-        public string RegisterInterface(TypeInfo type)
+        public string RegisterInterface(TypeInfo type, out bool alreadyRegistered)
         {
             logger.LogDebug($"Registering the interface: {type.FullName}");
+
+            if (registeredTypes.TryGetValue(type, out var fullyQualifiedClassName))
+            {
+                alreadyRegistered = true;
+                return fullyQualifiedClassName;
+            }
             
             UpdateReferences(type.Assembly);
-            var sourceCode = WebServiceClassGenerator.GenerateSource(type, out var fullyQualifiedClassName);
+            var sourceCode = WebServiceClassGenerator.GenerateSource(type, out fullyQualifiedClassName);
+            registeredTypes.Add(type, fullyQualifiedClassName);
+            alreadyRegistered = false;
+            
 #if NETSTANDARD
             syntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(sourceCode));
 #else

@@ -28,11 +28,11 @@ namespace DHaven.FauxGen
             WebServiceClassGenerator.SourceFilePath = opts.OutputSourcePath ?? WebServiceClassGenerator.SourceFilePath;
             WebServiceClassGenerator.GenerateSealedClasses = !opts.UseUnsealedClasses;
 
-            foreach (var iface in assembly.GetExportedTypes())
+            foreach (var @interface in assembly.GetExportedTypes())
             {
-                if (iface.IsInterface && iface.GetCustomAttribute<FauxClientAttribute>() != null)
+                if (@interface.IsInterface && @interface.GetCustomAttribute<FauxClientAttribute>() != null)
                 {
-                    compiler.RegisterInterface(iface.GetTypeInfo());
+                    compiler.RegisterInterface(@interface.GetTypeInfo(), out _);
                 }
             }
 

@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics;
 using System.Reflection;
+using System.Threading;
 
 namespace DHaven.Faux.Compiler
 {
@@ -33,12 +34,32 @@ namespace DHaven.Faux.Compiler
             Logger = DiscoverySupport.LogFactory.CreateLogger(typeof(TypeFactory));
         }
 
-        internal static WebServiceCompiler Compiler { get; } = new WebServiceCompiler();
+        private static WebServiceCompiler Compiler { get; } = new WebServiceCompiler();
+
+        internal static string RegisterInterface<TService>()
+        {
+            var className = Compiler.RegisterInterface(typeof(TService).GetTypeInfo(), out var alreadyRegistered);
+
+            if (alreadyRegistered || generatedAssembly == null)
+            {
+                return className;
+            }
+
+            Logger.LogWarning("Performance hit, registered a new interface after generating the assembly.  Regenerating now.");
+
+            lock (EmptyTypes)
+            {
+                // Assembly was already created, so in this case we have to force it to recompile to pick up the
+                // new service.
+                Interlocked.Exchange(ref generatedAssembly, null);
+            }
+
+            return className;
+        }
 
         internal static TService CreateInstance<TService>(string className)
             where TService : class // really interface
         {
-            var typeInfo = typeof(TService);
             EnsureAssemblyIsGenerated();
 
             var type = generatedAssembly?.GetType(className);
