@@ -16,10 +16,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using DHaven.Faux.HttpSupport;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -28,26 +25,47 @@ using TypeInfo = System.Reflection.TypeInfo;
 
 namespace DHaven.Faux.Compiler
 {
-    public class WebServiceCompiler
+    public partial class WebServiceCompiler
     {
-        private readonly List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
         private readonly ISet<string> references = new HashSet<string>();
+        private readonly IDictionary<TypeInfo,string> registeredTypes = new Dictionary<TypeInfo,string>();
 
         private readonly ILogger<WebServiceCompiler> logger =
             DiscoverySupport.LogFactory.CreateLogger<WebServiceCompiler>();
+
+#if NETSTANDARD
+        private readonly List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
+#else
+        private readonly List<string> codeSources = new List<string>();
+        private readonly HashSet<Assembly> sourceAssemblies = new HashSet<Assembly>();
+#endif
 
         public WebServiceCompiler()
         {
             UpdateReferences(GetType().GetTypeInfo().Assembly);
         }
 
-        public string RegisterInterface(TypeInfo type)
+        public string RegisterInterface(TypeInfo type, out bool alreadyRegistered)
         {
             logger.LogDebug($"Registering the interface: {type.FullName}");
+
+            if (registeredTypes.TryGetValue(type, out var fullyQualifiedClassName))
+            {
+                alreadyRegistered = true;
+                return fullyQualifiedClassName;
+            }
             
             UpdateReferences(type.Assembly);
-            var sourceCode = WebServiceClassGenerator.GenerateSource(type, out var fullyQualifiedClassName);
+            var sourceCode = WebServiceClassGenerator.GenerateSource(type, out fullyQualifiedClassName);
+            registeredTypes.Add(type, fullyQualifiedClassName);
+            alreadyRegistered = false;
+            
+#if NETSTANDARD
             syntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(sourceCode));
+#else
+            codeSources.Add(sourceCode);
+            sourceAssemblies.Add(type.Assembly);
+#endif
             
             logger.LogDebug($"Finished compiling the syntax tree for {fullyQualifiedClassName} generated from {type.FullName}");
 
@@ -71,33 +89,6 @@ namespace DHaven.Faux.Compiler
                 logger.LogTrace($"Loading dependency {dependency.FullName}");
                 UpdateReferences(Assembly.Load(dependency));
             }
-        }
-
-        public void Compile(Stream stream, string assemblyName)
-        {
-            var compilation = CSharpCompilation.Create(assemblyName)
-                .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
-                .AddReferences(references.Select(location => MetadataReference.CreateFromFile(location)))
-                .AddSyntaxTrees(syntaxTrees);
-
-            var result = compilation.Emit(stream);
-
-            if (result.Success)
-            {
-                return;
-            }
-
-            var failures = result.Diagnostics.Where(diagnostic =>
-                diagnostic.IsWarningAsError ||
-                diagnostic.Severity == DiagnosticSeverity.Error);
-
-            var errorList = new StringBuilder();
-            foreach (var diagnostic in failures)
-            {
-                errorList.AppendLine($"{diagnostic.Id}: {diagnostic.GetMessage()}");
-            }
-
-            throw new CompilationException(errorList.ToString());
         }
     }
 
