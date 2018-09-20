@@ -31,7 +31,7 @@ namespace DHaven.Faux.Compiler
 
         static TypeFactory()
         {
-            Logger = DiscoverySupport.LogFactory.CreateLogger(typeof(TypeFactory));
+            Logger = FauxConfiguration.LogFactory.CreateLogger(typeof(TypeFactory));
         }
 
         private static WebServiceCompiler Compiler { get; } = new WebServiceCompiler();

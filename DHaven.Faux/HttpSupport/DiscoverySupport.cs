@@ -14,8 +14,7 @@
 
 #endregion
 
-using System.IO;
-using Microsoft.Extensions.Configuration;
+using System;
 using Microsoft.Extensions.Logging;
 using Steeltoe.Discovery.Client;
 
@@ -27,28 +26,15 @@ namespace DHaven.Faux.HttpSupport
     /// </summary>
     public static class DiscoverySupport
     {
-        static DiscoverySupport()
+        internal static void Configure()
         {
-            var builder = new ConfigurationBuilder()
-               .SetBasePath(Directory.GetCurrentDirectory())
-               .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-               .AddEnvironmentVariables();
+            var factory = new DiscoveryClientFactory(new DiscoveryOptions(FauxConfiguration.Configuration));
+            var handler = new DiscoveryHttpClientHandler(factory.CreateClient() as IDiscoveryClient,
+                FauxConfiguration.LogFactory.CreateLogger<DiscoveryHttpClientHandler>());
 
-            Configuration = builder.Build();
-
-            var logFactory = new LoggerFactory();
-            logFactory.AddDebug(LogLevel.Trace);
-            LogFactory = logFactory;
-
-            var factory = new DiscoveryClientFactory(new DiscoveryOptions(Configuration));
-            var handler = new DiscoveryHttpClientHandler(factory.CreateClient() as IDiscoveryClient, logFactory.CreateLogger<DiscoveryHttpClientHandler>());
-            
+            (Client as IDisposable)?.Dispose();
             Client = new HttpClientWrapper(handler);
         }
-
-        internal static IConfiguration Configuration { get; }
-
-        internal static ILoggerFactory LogFactory { get; }
 
         public static IHttpClient Client { get; set; }
     }

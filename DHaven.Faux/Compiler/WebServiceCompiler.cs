@@ -31,7 +31,7 @@ namespace DHaven.Faux.Compiler
         private readonly IDictionary<TypeInfo,string> registeredTypes = new Dictionary<TypeInfo,string>();
 
         private readonly ILogger<WebServiceCompiler> logger =
-            DiscoverySupport.LogFactory.CreateLogger<WebServiceCompiler>();
+            FauxConfiguration.LogFactory.CreateLogger<WebServiceCompiler>();
 
 #if NETSTANDARD
         private readonly List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
