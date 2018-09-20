@@ -13,13 +13,12 @@
 // limitations under the License.
 #endregion
 
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using System.Runtime.Loader;
 using DHaven.Faux.HttpSupport;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Diagnostics;
+using System.Reflection;
+using System.Threading;
 
 namespace DHaven.Faux.Compiler
 {
@@ -32,24 +31,44 @@ namespace DHaven.Faux.Compiler
 
         static TypeFactory()
         {
-            Logger = DiscoverySupport.LogFactory.CreateLogger(typeof(TypeFactory));
+            Logger = FauxConfiguration.LogFactory.CreateLogger(typeof(TypeFactory));
         }
 
-        internal static WebServiceCompiler Compiler { get; } = new WebServiceCompiler();
+        private static WebServiceCompiler Compiler { get; } = new WebServiceCompiler();
+
+        internal static string RegisterInterface<TService>()
+        {
+            var className = Compiler.RegisterInterface(typeof(TService).GetTypeInfo(), out var alreadyRegistered);
+
+            if (alreadyRegistered || generatedAssembly == null)
+            {
+                return className;
+            }
+
+            Logger.LogWarning("Performance hit, registered a new interface after generating the assembly.  Regenerating now.");
+
+            lock (EmptyTypes)
+            {
+                // Assembly was already created, so in this case we have to force it to recompile to pick up the
+                // new service.
+                Interlocked.Exchange(ref generatedAssembly, null);
+            }
+
+            return className;
+        }
 
         internal static TService CreateInstance<TService>(string className)
             where TService : class // really interface
         {
             EnsureAssemblyIsGenerated();
-            
+
             var type = generatedAssembly?.GetType(className);
             var constructor = type?.GetConstructor(EmptyTypes);
             return constructor?.Invoke(EmptyParams) as TService;
         }
-                
+
         private static void EnsureAssemblyIsGenerated()
         {
-            // Delay until all services have been registered first.
             if (generatedAssembly != null)
             {
                 return;
@@ -57,20 +76,16 @@ namespace DHaven.Faux.Compiler
 
             lock (EmptyTypes)
             {
-                if (generatedAssembly != null)
+                if(generatedAssembly != null)
                 {
                     return;
                 }
 
                 Logger.LogInformation("Compiling and loading type assembly in memory.");
-                using (var stream = new MemoryStream())
-                {
-                    Compiler.Compile(stream, Path.GetRandomFileName());
-                    stream.Seek(0, SeekOrigin.Begin);
-                    generatedAssembly = AssemblyLoadContext.Default.LoadFromStream(stream);
-                }
-            }
 
+                generatedAssembly = Compiler.Compile(null);
+            }
+            
             Debug.Assert(generatedAssembly != null);
         }
     }

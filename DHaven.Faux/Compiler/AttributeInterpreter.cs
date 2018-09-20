@@ -18,7 +18,13 @@ namespace DHaven.Faux.Compiler
             "content-length",
             "content-encoding",
             "content-language",
-            "content-location"
+            "content-location",
+            "content-disposition",
+            "content-range",
+            "content-md5",
+            "expires",
+            "last-modified",
+            "allow"
         };
 
         internal static void InterpretPathValue(ParameterInfo parameter, StringBuilder classBuilder)

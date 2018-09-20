@@ -22,7 +22,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using DHaven.Faux.HttpSupport;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TypeInfo = System.Reflection.TypeInfo;
 
@@ -30,17 +30,23 @@ namespace DHaven.Faux.Compiler
 {
     public static class WebServiceClassGenerator
     {
-        private static readonly ILogger Logger;
+        private static ILogger logger = FauxConfiguration.LogFactory.CreateLogger(typeof(WebServiceClassGenerator));
         
-        static WebServiceClassGenerator()
+        internal static void Configure()
         {
-            Logger = DiscoverySupport.LogFactory.CreateLogger(typeof(WebServiceClassGenerator));
+            logger = FauxConfiguration.LogFactory.CreateLogger(typeof(WebServiceClassGenerator));
 
-            var faux = DiscoverySupport.Configuration.GetSection("faux");
+            var faux = FauxConfiguration.Configuration.GetSection("faux");
             var debug = faux.GetSection("debug");
 
             OutputSourceFiles = Convert.ToBoolean(debug["outputSource"]);
             SourceFilePath = debug["sourcePath"];
+            RootNamespace = faux["rootNamespace"];
+
+            if (string.IsNullOrEmpty(RootNamespace))
+            {
+                RootNamespace = "DHaven.Feign.Wrapper";
+            }
 
             if (string.IsNullOrEmpty(SourceFilePath))
             {
@@ -78,13 +84,13 @@ namespace DHaven.Faux.Compiler
             var className = typeInfo.FullName?.Replace(".", string.Empty);
             fullClassName = $"{RootNamespace}.{className}";
 
-            using (Logger.BeginScope("Generator {0}:", className))
+            using (logger.BeginScope("Generator {0}:", className))
             {
                 var serviceName = typeInfo.GetCustomAttribute<FauxClientAttribute>().Name;
                 var baseRoute = typeInfo.GetCustomAttribute<RouteAttribute>()?.BaseRoute ?? string.Empty;
                 var sealedString = GenerateSealedClasses ? "sealed" : string.Empty;
 
-                Logger.LogTrace("Beginning to generate source");
+                logger.LogTrace("Beginning to generate source");
                 
                 var classBuilder = new StringBuilder();
                 classBuilder.AppendLine($"namespace {RootNamespace}");
@@ -106,7 +112,7 @@ namespace DHaven.Faux.Compiler
 
                 var sourceCode = classBuilder.ToString();
                 
-                Logger.LogTrace("Source generated");
+                logger.LogTrace("Source generated");
 
                 if (!OutputSourceFiles)
                 {
@@ -116,12 +122,12 @@ namespace DHaven.Faux.Compiler
                 var fullPath = Path.Combine(SourceFilePath, $"{className}.cs");
                 try
                 {
-                    Logger.LogTrace("Writing source file: {0}", fullPath);
+                    logger.LogTrace("Writing source file: {0}", fullPath);
                     File.WriteAllText(fullPath, sourceCode, Encoding.UTF8);
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogWarning(ex, "Could not write the source code for {0}", fullPath);
+                    logger.LogWarning(ex, "Could not write the source code for {0}", fullPath);
                 }
 
                 return sourceCode;
