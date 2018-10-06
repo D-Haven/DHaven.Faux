@@ -28,15 +28,15 @@ using TypeInfo = System.Reflection.TypeInfo;
 
 namespace DHaven.Faux.Compiler
 {
-    public static class WebServiceClassGenerator
+    public class WebServiceClassGenerator : IWebServiceClassGenerator
     {
-        private static ILogger logger = FauxConfiguration.LogFactory.CreateLogger(typeof(WebServiceClassGenerator));
+        private readonly ILogger logger;
         
-        internal static void Configure()
+        internal WebServiceClassGenerator(IConfiguration configuration, ILogger<WebServiceClassGenerator> logger)
         {
-            logger = FauxConfiguration.LogFactory.CreateLogger(typeof(WebServiceClassGenerator));
+            this.logger = logger;
 
-            var faux = FauxConfiguration.Configuration.GetSection("faux");
+            var faux = configuration.GetSection("faux");
             var debug = faux.GetSection("debug");
 
             OutputSourceFiles = Convert.ToBoolean(debug["outputSource"]);
@@ -59,17 +59,17 @@ namespace DHaven.Faux.Compiler
             }
         }
 
-        public static string SourceFilePath { get; set; }
+        public string SourceFilePath { get; set; }
 
         // ReSharper disable once MemberCanBePrivate.Global
-        public static bool OutputSourceFiles { get; set; }
+        public bool OutputSourceFiles { get; set; }
 
-        public static string RootNamespace { get; set; } = "DHaven.Feign.Wrapper";
+        public string RootNamespace { get; set; } = "DHaven.Feign.Wrapper";
 
         // ReSharper disable once MemberCanBePrivate.Global
-        public static bool GenerateSealedClasses { get; set; } = true;
+        public bool GenerateSealedClasses { get; set; } = true;
 
-        public static string GenerateSource(TypeInfo typeInfo, out string fullClassName)
+        public string GenerateSource(TypeInfo typeInfo, out string fullClassName)
         {
             if (!typeInfo.IsInterface || !typeInfo.IsPublic)
             {
@@ -99,8 +99,8 @@ namespace DHaven.Faux.Compiler
                 classBuilder.AppendLine(
                     $"    public {sealedString} class {className} : DHaven.Faux.HttpSupport.DiscoveryAwareBase, {typeInfo.FullName}");
                 classBuilder.AppendLine("    {");
-                classBuilder.AppendLine($"        public {className}()");
-                classBuilder.AppendLine($"            : base(\"{serviceName}\", \"{baseRoute}\") {{ }}");
+                classBuilder.AppendLine($"        public {className}(DHaven.Faux.HttpSupport.IHttpClient client)");
+                classBuilder.AppendLine($"            : base(client, \"{serviceName}\", \"{baseRoute}\") {{ }}");
 
                 foreach (var method in typeInfo.GetMethods())
                 {
@@ -134,7 +134,7 @@ namespace DHaven.Faux.Compiler
             }
         }
  
-        private static void BuildMethod(StringBuilder classBuilder, MethodInfo method)
+        private void BuildMethod(StringBuilder classBuilder, MethodInfo method)
         {
             var isAsyncCall = typeof(Task).IsAssignableFrom(method.ReturnType);
             var returnType = method.ReturnType;

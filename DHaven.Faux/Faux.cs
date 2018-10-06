@@ -15,20 +15,33 @@
 #endregion
 
 using DHaven.Faux.Compiler;
+using DHaven.Faux.HttpSupport;
 
 namespace DHaven.Faux
 {
     public class Faux<TService>
         where TService : class // Really an interface
     {
-        private readonly string className;
         private TService service;
 
         public Faux()
         {
-            className = TypeFactory.RegisterInterface<TService>();
+            TypeFactory.RegisterInterface<TService>();
         }
 
-        public TService Service => service ?? (service = TypeFactory.CreateInstance<TService>(className));
+        /// <summary>
+        /// Gets the global instance of that service for the application.
+        /// </summary>
+        public TService Service => service ?? (service = GenerateService(FauxConfiguration.Client));
+
+        /// <summary>
+        /// Usually called by tests, it generates a new instance every time, using the IHttpClient provided.
+        /// </summary>
+        /// <param name="client">client</param>
+        /// <returns>the service</returns>
+        public TService GenerateService(IHttpClient client)
+        {
+            return TypeFactory.CreateInstance<TService>(client);
+        }
     }
 }

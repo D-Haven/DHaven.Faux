@@ -24,8 +24,7 @@ namespace DHaven.Faux.Compiler
 {
     internal static class TypeFactory
     {
-        private static readonly Type[] EmptyTypes = new Type[0];
-        private static readonly object[] EmptyParams = new object[0];
+        private static readonly Type[] ConstructorTypes = new Type[] { typeof(IHttpClient) };
         private static readonly ILogger Logger;
         private static Assembly generatedAssembly;
 
@@ -34,37 +33,41 @@ namespace DHaven.Faux.Compiler
             Logger = FauxConfiguration.LogFactory.CreateLogger(typeof(TypeFactory));
         }
 
-        private static WebServiceCompiler Compiler { get; } = new WebServiceCompiler();
+        private static WebServiceCompiler Compiler { get; } = new WebServiceCompiler(FauxConfiguration.ClassGenerator);
 
-        internal static string RegisterInterface<TService>()
+        internal static void RegisterInterface<TService>()
         {
-            var className = Compiler.RegisterInterface(typeof(TService).GetTypeInfo(), out var alreadyRegistered);
+            bool isNewRegistration = Compiler.RegisterInterface(typeof(TService).GetTypeInfo());
 
-            if (alreadyRegistered || generatedAssembly == null)
+            if (!isNewRegistration || generatedAssembly == null)
             {
-                return className;
+                return;
             }
 
             Logger.LogWarning("Performance hit, registered a new interface after generating the assembly.  Regenerating now.");
 
-            lock (EmptyTypes)
+            lock (ConstructorTypes)
             {
                 // Assembly was already created, so in this case we have to force it to recompile to pick up the
                 // new service.
                 Interlocked.Exchange(ref generatedAssembly, null);
             }
-
-            return className;
         }
 
-        internal static TService CreateInstance<TService>(string className)
+        internal static TService CreateInstance<TService>(IHttpClient client)
             where TService : class // really interface
+        {
+            return CreateInstance(typeof(TService).GetTypeInfo(), client) as TService;
+        }
+
+        internal static object CreateInstance(TypeInfo service, IHttpClient client)
         {
             EnsureAssemblyIsGenerated();
 
+            var className = Compiler.GetImplementationName(service);
             var type = generatedAssembly?.GetType(className);
-            var constructor = type?.GetConstructor(EmptyTypes);
-            return constructor?.Invoke(EmptyParams) as TService;
+            var constructor = type?.GetConstructor(ConstructorTypes);
+            return constructor?.Invoke(new object[] { client });
         }
 
         private static void EnsureAssemblyIsGenerated()
@@ -74,7 +77,7 @@ namespace DHaven.Faux.Compiler
                 return;
             }
 
-            lock (EmptyTypes)
+            lock (ConstructorTypes)
             {
                 if(generatedAssembly != null)
                 {

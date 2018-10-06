@@ -13,14 +13,18 @@
 // limitations under the License.
 #endregion
 
+using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Reflection;
 using DHaven.Faux.Compiler;
 using DHaven.Faux.HttpSupport;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Steeltoe.Discovery.Client;
 
 namespace DHaven.Faux
 {
@@ -41,7 +45,7 @@ namespace DHaven.Faux
 
             UseFaux(null, builder.Build());
         }
-        
+
         [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
         [SuppressMessage("ReSharper", "UnusedMember.Global")]
         public static IApplicationBuilder UseFaux(this IApplicationBuilder app, IConfiguration configuration)
@@ -51,9 +55,14 @@ namespace DHaven.Faux
             var logFactory = new LoggerFactory();
             logFactory.AddDebug(LogLevel.Trace);
             LogFactory = logFactory;
-            
-            DiscoverySupport.Configure();
-            WebServiceClassGenerator.Configure();
+
+            var factory = new DiscoveryClientFactory(new DiscoveryOptions(Configuration));
+            var handler = new DiscoveryHttpClientHandler(factory.CreateClient() as IDiscoveryClient,
+                LogFactory.CreateLogger<DiscoveryHttpClientHandler>());
+
+            Client = new HttpClientWrapper(handler);
+
+            ClassGenerator = new WebServiceClassGenerator(Configuration, LogFactory.CreateLogger<WebServiceClassGenerator>());
 
             return app;
         }
@@ -66,16 +75,57 @@ namespace DHaven.Faux
         /// <returns></returns>
         [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
         [SuppressMessage("ReSharper", "UnusedMember.Global")]
-        public static IServiceCollection AddFaux<TService>(this IServiceCollection services)
-            where TService : class
+        public static IServiceCollection AddFaux(this IServiceCollection services, Action<IFauxRegistrar> registrations)
         {
-            var className = TypeFactory.RegisterInterface<TService>();
-            services.AddSingleton(provider => TypeFactory.CreateInstance<TService>(className));
-            
+            services.AddSingleton<IHttpClient>(provider => 
+            {
+                IDiscoveryClient client = provider.GetRequiredService<IDiscoveryClient>();
+                ILogger<DiscoveryHttpClientHandler> logger = provider.GetRequiredService<ILogger<DiscoveryHttpClientHandler>>();
+
+                return new HttpClientWrapper(new DiscoveryHttpClientHandler(client, logger));
+            });
+
+            var registrar = new Registrar();
+            registrations(registrar);
+
+            foreach (var info in registrar.GetRegisteredServices())
+            {
+                services.AddSingleton(info, (provider) =>
+                {
+                    IHttpClient client = provider.GetRequiredService<IHttpClient>();
+                    return TypeFactory.CreateInstance(info, Client);
+                });
+            }
+
             return services;
         }
 
+        public static IWebServiceClassGenerator ClassGenerator { get; private set; }
+
+        public static IHttpClient Client { get; private set; }
+
         internal static IConfiguration Configuration { get; private set; }
+
         internal static ILoggerFactory LogFactory { get; private set; }
+
+        private class Registrar : IFauxRegistrar
+        {
+            private readonly IList<TypeInfo> services = new List<TypeInfo>();
+
+            public IFauxRegistrar Register<TService>() where TService : class
+            {
+                TypeFactory.RegisterInterface<TService>();
+                services.Add(typeof(TService).GetTypeInfo());
+                return this;
+            }
+
+            public IEnumerable<TypeInfo> GetRegisteredServices()
+            {
+                foreach(var info in services)
+                {
+                    yield return info;
+                }
+            }
+        }
     }
 }

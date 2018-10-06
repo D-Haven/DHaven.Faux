@@ -17,7 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using DHaven.Faux.HttpSupport;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Extensions.Logging;
@@ -33,6 +32,8 @@ namespace DHaven.Faux.Compiler
         private readonly ILogger<WebServiceCompiler> logger =
             FauxConfiguration.LogFactory.CreateLogger<WebServiceCompiler>();
 
+        private readonly IWebServiceClassGenerator serviceClassGenerator;
+
 #if NETSTANDARD
         private readonly List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
 #else
@@ -40,25 +41,29 @@ namespace DHaven.Faux.Compiler
         private readonly HashSet<Assembly> sourceAssemblies = new HashSet<Assembly>();
 #endif
 
-        public WebServiceCompiler()
+        public WebServiceCompiler(IWebServiceClassGenerator classGenerator)
         {
+            serviceClassGenerator = classGenerator;
             UpdateReferences(GetType().GetTypeInfo().Assembly);
         }
 
-        public string RegisterInterface(TypeInfo type, out bool alreadyRegistered)
+        /// <summary>
+        /// Registers a new type to be compiled.
+        /// </summary>
+        /// <param name="type">the type to register</param>
+        /// <returns>true if this is a new registration or false if it was already registered</returns>
+        public bool RegisterInterface(TypeInfo type)
         {
             logger.LogDebug($"Registering the interface: {type.FullName}");
 
             if (registeredTypes.TryGetValue(type, out var fullyQualifiedClassName))
             {
-                alreadyRegistered = true;
-                return fullyQualifiedClassName;
+                return false;
             }
             
             UpdateReferences(type.Assembly);
-            var sourceCode = WebServiceClassGenerator.GenerateSource(type, out fullyQualifiedClassName);
+            var sourceCode = serviceClassGenerator.GenerateSource(type, out fullyQualifiedClassName);
             registeredTypes.Add(type, fullyQualifiedClassName);
-            alreadyRegistered = false;
             
 #if NETSTANDARD
             syntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(sourceCode));
@@ -68,7 +73,12 @@ namespace DHaven.Faux.Compiler
 #endif
             
             logger.LogDebug($"Finished compiling the syntax tree for {fullyQualifiedClassName} generated from {type.FullName}");
+            return true;
+        }
 
+        public string GetImplementationName(TypeInfo type)
+        {
+            registeredTypes.TryGetValue(type, out var fullyQualifiedClassName);
             return fullyQualifiedClassName;
         }
 

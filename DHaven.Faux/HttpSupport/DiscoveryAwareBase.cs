@@ -38,9 +38,11 @@ namespace DHaven.Faux.HttpSupport
     public abstract class DiscoveryAwareBase
     {
         private readonly Uri baseUri;
+        private readonly IHttpClient httpClient;
 
-        protected DiscoveryAwareBase(string serviceName, string baseRoute)
+        protected DiscoveryAwareBase(IHttpClient client, string serviceName, string baseRoute)
         {
+            httpClient = client;
             // Strip leading slashes so that the base URI is assembled correctly
             if (baseRoute.StartsWith("/"))
             {
@@ -65,14 +67,14 @@ namespace DHaven.Faux.HttpSupport
             return new HttpRequestMessage(method, serviceUri);
         }
 
-        protected static HttpResponseMessage Invoke(HttpRequestMessage message)
+        protected HttpResponseMessage Invoke(HttpRequestMessage message)
         {
             return InvokeAsync(message).Result;
         }
 
-        protected static async Task<HttpResponseMessage> InvokeAsync(HttpRequestMessage message)
+        protected async Task<HttpResponseMessage> InvokeAsync(HttpRequestMessage message)
         {
-            var response = await DiscoverySupport.Client.SendAsync(message);
+            var response = await httpClient.SendAsync(message);
 
             if (!response.IsSuccessStatusCode)
             {

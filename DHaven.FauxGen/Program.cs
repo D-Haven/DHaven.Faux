@@ -21,18 +21,19 @@ namespace DHaven.FauxGen
         {
             var outputAssembly = opts.OutputAssemblyName ?? $"Generated.{Path.GetFileName(opts.InputAssemblyPath)}";
             var assembly = Assembly.LoadFile(opts.InputAssemblyPath);
-            var compiler = new WebServiceCompiler();
+            var webserviceGenerator = FauxConfiguration.ClassGenerator;
+            var compiler = new WebServiceCompiler(webserviceGenerator);
 
-            WebServiceClassGenerator.RootNamespace = opts.RootNameSapce ?? WebServiceClassGenerator.RootNamespace;
-            WebServiceClassGenerator.OutputSourceFiles = opts.OutputSourceCode;
-            WebServiceClassGenerator.SourceFilePath = opts.OutputSourcePath ?? WebServiceClassGenerator.SourceFilePath;
-            WebServiceClassGenerator.GenerateSealedClasses = !opts.UseUnsealedClasses;
+            webserviceGenerator.RootNamespace = opts.RootNameSapce ?? webserviceGenerator.RootNamespace;
+            webserviceGenerator.OutputSourceFiles = opts.OutputSourceCode;
+            webserviceGenerator.SourceFilePath = opts.OutputSourcePath ?? webserviceGenerator.SourceFilePath;
+            webserviceGenerator.GenerateSealedClasses = !opts.UseUnsealedClasses;
 
             foreach (var @interface in assembly.GetExportedTypes())
             {
                 if (@interface.IsInterface && @interface.GetCustomAttribute<FauxClientAttribute>() != null)
                 {
-                    compiler.RegisterInterface(@interface.GetTypeInfo(), out _);
+                    compiler.RegisterInterface(@interface.GetTypeInfo());
                 }
             }
 
