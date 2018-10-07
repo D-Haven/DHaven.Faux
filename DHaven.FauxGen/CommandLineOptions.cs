@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+using DHaven.Faux;
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace DHaven.FauxGen
@@ -28,5 +29,13 @@ namespace DHaven.FauxGen
         // is opposite of the default behavior.
         [Option('u', "unsealed", HelpText = "Generate classes that are not sealed.  They are sealed by default.")]
         public bool UseUnsealedClasses { get; set; }
+
+        internal void ApplyToConfig(CompilerConfig config)
+        {
+            config.RootNamespace = RootNameSapce ?? config.RootNamespace;
+            config.OutputSourceFiles = OutputSourceCode;
+            config.SourceFilePath = OutputSourcePath ?? config.SourceFilePath;
+            config.GenerateSealedClasses = !UseUnsealedClasses;
+        }
     }
 }

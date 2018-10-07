@@ -102,8 +102,15 @@ namespace DHaven.Faux.Compiler
 
             foreach(var dependency in assembly.GetReferencedAssemblies())
             {
-                logger.LogTrace($"Loading dependency {dependency.FullName}");
-                UpdateReferences(Assembly.Load(dependency));
+                try
+                {
+                    logger.LogTrace($"Loading dependency {dependency.FullName}");
+                    UpdateReferences(Assembly.Load(dependency));
+                }
+                catch(Exception ex)
+                {
+                    logger.LogWarning(ex, "Could not load dependant assembly, compilation may fail");
+                }
             }
         }
     }

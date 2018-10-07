@@ -18,8 +18,14 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="commandlineparser" Version="2.3.0" />
+    <PackageReference Include="microsoft.extensions.logging.console" Version="2.1.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DHaven.Faux\DHaven.Faux.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Extensions.DependencyInjection">
+      <HintPath>..\..\..\..\..\..\Program Files\dotnet\sdk\NuGetFallbackFolder\microsoft.extensions.dependencyinjection\2.1.1\lib\netcoreapp2.0\Microsoft.Extensions.DependencyInjection.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

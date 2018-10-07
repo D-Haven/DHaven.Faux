@@ -56,13 +56,13 @@ namespace DHaven.Faux
             logFactory.AddDebug(LogLevel.Trace);
             LogFactory = logFactory;
 
+            // TODO: this stuff should ne in the services section.
             var factory = new DiscoveryClientFactory(new DiscoveryOptions(Configuration));
             var handler = new DiscoveryHttpClientHandler(factory.CreateClient() as IDiscoveryClient,
                 LogFactory.CreateLogger<DiscoveryHttpClientHandler>());
 
             Client = new HttpClientWrapper(handler);
-
-            ClassGenerator = new WebServiceClassGenerator(Configuration, LogFactory.CreateLogger<WebServiceClassGenerator>());
+            ClassGenerator = new CoreWebServiceClassGenerator(new CompilerConfig(Configuration), LogFactory.CreateLogger<CoreWebServiceClassGenerator>());
 
             return app;
         }
@@ -75,26 +75,42 @@ namespace DHaven.Faux
         /// <returns></returns>
         [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
         [SuppressMessage("ReSharper", "UnusedMember.Global")]
-        public static IServiceCollection AddFaux(this IServiceCollection services, Action<IFauxRegistrar> registrations)
+        public static IServiceCollection AddFaux(this IServiceCollection services, IConfiguration configuration, Action<IFauxRegistrar> registrations = null)
         {
+            services.Configure<CompilerConfig>(configuration.GetSection("Faux"));
+            services.AddSingleton<CompilerConfig>();
+            services.AddSingleton<IWebServiceClassGenerator, CoreWebServiceClassGenerator>();
+            services.AddSingleton<WebServiceCompiler>();
+
             services.AddSingleton<IHttpClient>(provider => 
             {
-                IDiscoveryClient client = provider.GetRequiredService<IDiscoveryClient>();
-                ILogger<DiscoveryHttpClientHandler> logger = provider.GetRequiredService<ILogger<DiscoveryHttpClientHandler>>();
+                IDiscoveryClient client = provider.GetService<IDiscoveryClient>();
 
+                // If the discovery client hasn't been created yet, we make it ourselves.
+                if(client == null)
+                {
+                    var factory = new DiscoveryClientFactory(new DiscoveryOptions(configuration));
+                    client = factory.CreateClient() as IDiscoveryClient;
+                }
+
+                ILogger<DiscoveryHttpClientHandler> logger = provider.GetRequiredService<ILogger<DiscoveryHttpClientHandler>>();
+                
                 return new HttpClientWrapper(new DiscoveryHttpClientHandler(client, logger));
             });
 
-            var registrar = new Registrar();
-            registrations(registrar);
-
-            foreach (var info in registrar.GetRegisteredServices())
+            if (registrations != null)
             {
-                services.AddSingleton(info, (provider) =>
+                var registrar = new Registrar();
+                registrations(registrar);
+
+                foreach (var info in registrar.GetRegisteredServices())
                 {
-                    IHttpClient client = provider.GetRequiredService<IHttpClient>();
-                    return TypeFactory.CreateInstance(info, Client);
-                });
+                    services.AddSingleton(info, (provider) =>
+                    {
+                        IHttpClient client = provider.GetRequiredService<IHttpClient>();
+                        return TypeFactory.CreateInstance(info, Client);
+                    });
+                }
             }
 
             return services;

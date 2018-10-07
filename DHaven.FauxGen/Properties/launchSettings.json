@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "DHaven.FauxGen": {
+      "commandName": "Project",
+      "commandLineArgs": "-a C:\\Users\\blori\\source\\repos\\DHaven.Faux\\DHaven.Faux.Test\\bin\\Debug\\netcoreapp2.0\\DHaven.Faux.Test.dll -w"
+    }
+  }
+}

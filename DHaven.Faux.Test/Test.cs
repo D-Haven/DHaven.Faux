@@ -29,8 +29,9 @@ namespace DHaven.Faux.Test
     {
         static Test()
         {
-            FauxConfiguration.ClassGenerator.OutputSourceFiles = true;
-            FauxConfiguration.ClassGenerator.SourceFilePath = "./dhaven-faux";
+            FauxConfiguration.ClassGenerator.Config.OutputSourceFiles = true;
+            FauxConfiguration.ClassGenerator.Config.SourceFilePath = "./dhaven-faux";
+
             Compiler = new WebServiceCompiler(FauxConfiguration.ClassGenerator);
             Compiler.RegisterInterface<ITodoService>();
             Compiler.RegisterInterface<IReturnService>();
