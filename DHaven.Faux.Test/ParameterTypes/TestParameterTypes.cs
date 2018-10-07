@@ -30,7 +30,7 @@ namespace DHaven.Faux.Test.ParameterTypes
         [Fact]
         public async Task GeneratesRequestHeadersWhenAllValuesArePresent()
         {
-            var service = Test.FauxBlob.GenerateService(Test.MockRequest(
+            var service = Test.GenerateService<IBlobStore>(Test.MockRequest(
                 req =>
                 {
                     req.Method.Should().BeEquivalentTo(HttpMethod.Post);
@@ -56,7 +56,7 @@ namespace DHaven.Faux.Test.ParameterTypes
         [Fact]
         public async Task GeneratesFullUriWhenPathVariablesArePresent()
         {
-            var service = Test.FauxBlob.GenerateService(Test.MockRequest(
+            var service = Test.GenerateService<IBlobStore>(Test.MockRequest(
                 req =>
                 {
                     req.Method.Should().BeEquivalentTo(HttpMethod.Get);

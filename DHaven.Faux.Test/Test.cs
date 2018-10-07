@@ -15,6 +15,8 @@
 
 using System;
 using System.Net.Http;
+using System.Reflection;
+using DHaven.Faux.Compiler;
 using DHaven.Faux.HttpSupport;
 using DHaven.Faux.Test.HttpMethods;
 using DHaven.Faux.Test.ParameterTypes;
@@ -29,14 +31,26 @@ namespace DHaven.Faux.Test
         {
             FauxConfiguration.ClassGenerator.OutputSourceFiles = true;
             FauxConfiguration.ClassGenerator.SourceFilePath = "./dhaven-faux";
-            FauxTodo = new Faux<ITodoService>();
-            FauxReturn = new Faux<IReturnService>();
-            FauxBlob = new Faux<IBlobStore>();
+            Compiler = new WebServiceCompiler(FauxConfiguration.ClassGenerator);
+            Compiler.RegisterInterface<ITodoService>();
+            Compiler.RegisterInterface<IReturnService>();
+            Compiler.RegisterInterface<IBlobStore>();
+            Assembly = Compiler.Compile(null);
         }
-        
-        public static readonly Faux<ITodoService> FauxTodo;
-        public static readonly Faux<IReturnService> FauxReturn;
-        public static readonly Faux<IBlobStore> FauxBlob;
+
+        private static WebServiceCompiler Compiler { get; }
+        private static Assembly Assembly { get; }
+
+        public static TService GenerateService<TService>(IHttpClient client)
+            where TService : class
+        {
+            var service = typeof(TService).GetTypeInfo();
+            var className = Compiler.GetImplementationName(service);
+            var type = Assembly.GetType(className);
+            var constructor = type?.GetConstructor(new Type[] { typeof(IHttpClient) });
+            return constructor?.Invoke(new object[] { client }) as TService;
+        }
+
 
         public static IHttpClient MockRequest(Action<HttpRequestMessage> verifyRequest,
             HttpResponseMessage response)

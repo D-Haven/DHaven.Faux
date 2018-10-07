@@ -16,7 +16,6 @@
 using System.Net;
 using System.Net.Http;
 using System.Text;
-using DHaven.Faux.HttpSupport;
 using Xunit;
 using FluentAssertions;
 using System;
@@ -28,7 +27,7 @@ namespace DHaven.Faux.Test.HttpMethods
         [Fact]
         public void FauxGeneratesCallWithHttpGet()
         {
-            var service = Test.FauxTodo.GenerateService(Test.MockRequest(
+            var service = Test.GenerateService<ITodoService>(Test.MockRequest(
                 req =>
                 {
                     req.Method.Should().BeEquivalentTo(HttpMethod.Get);
@@ -46,7 +45,7 @@ namespace DHaven.Faux.Test.HttpMethods
         [Fact]
         public void FauxGeneratesDeleteWithPathValue()
         {
-            var service = Test.FauxTodo.GenerateService(Test.MockRequest(
+            var service = Test.GenerateService<ITodoService>(Test.MockRequest(
                 req =>
                 {
                     req.Method.Should().BeEquivalentTo(HttpMethod.Delete);
@@ -60,7 +59,7 @@ namespace DHaven.Faux.Test.HttpMethods
         [Fact]
         public void FauxGeneratesPutWithObject()
         {
-            var service = Test.FauxTodo.GenerateService(Test.MockRequest(
+            var service = Test.GenerateService<ITodoService>(Test.MockRequest(
                 req =>
                 {
                     req.Method.Should().BeEquivalentTo(HttpMethod.Put);
@@ -79,7 +78,7 @@ namespace DHaven.Faux.Test.HttpMethods
         [Fact]
         public void GetByIdGetsObject()
         {
-            var service = Test.FauxTodo.GenerateService(Test.MockRequest(
+            var service = Test.GenerateService<ITodoService>(Test.MockRequest(
                 request =>
                 {
                     request.Method.Should().BeEquivalentTo(HttpMethod.Get);

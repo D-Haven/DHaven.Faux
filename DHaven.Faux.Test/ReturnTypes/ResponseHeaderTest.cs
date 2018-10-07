@@ -28,7 +28,7 @@ namespace DHaven.Faux.Test.ReturnTypes
         [Fact]
         public async Task AsyncReceiveResponseHeader()
         {
-            var service = Test.FauxReturn.GenerateService(Test.MockRequest(request =>
+            var service = Test.GenerateService<IReturnService>(Test.MockRequest(request =>
                 {
                     request.Method.Should().BeEquivalentTo(HttpMethod.Put);
                     request.RequestUri.ToString().Should().BeEquivalentTo("http://return/");
@@ -45,7 +45,7 @@ namespace DHaven.Faux.Test.ReturnTypes
         [Fact]
         public void ReceiveResponseHeader()
         {
-                var service = Test.FauxReturn.GenerateService(Test.MockRequest(request =>
+                var service = Test.GenerateService<IReturnService>(Test.MockRequest(request =>
                 {
                     request.Method.Should().BeEquivalentTo(HttpMethod.Put);
                     request.RequestUri.ToString().Should().BeEquivalentTo("http://return/");
@@ -62,7 +62,7 @@ namespace DHaven.Faux.Test.ReturnTypes
         [Fact]
         public async Task AsyncReceiveJsonSerializedObject()
         {
-            var service = Test.FauxReturn.GenerateService(Test.MockRequest(request =>
+            var service = Test.GenerateService<IReturnService>(Test.MockRequest(request =>
                 {
                     request.Method.Should().BeEquivalentTo(HttpMethod.Post);
                     request.RequestUri.ToString().Should().BeEquivalentTo("http://return/echo");
@@ -81,7 +81,7 @@ namespace DHaven.Faux.Test.ReturnTypes
         [Fact]
         public void ReceiveJsonSerializedObject()
         {
-            var service = Test.FauxReturn.GenerateService(Test.MockRequest(request =>
+            var service = Test.GenerateService<IReturnService>(Test.MockRequest(request =>
                 {
                     request.Method.Should().BeEquivalentTo(HttpMethod.Post);
                     request.RequestUri.ToString().Should().BeEquivalentTo("http://return/echo");
@@ -100,7 +100,7 @@ namespace DHaven.Faux.Test.ReturnTypes
         [Fact]
         public void CanGetResponseHeadersViaOutVariables()
         {
-            var service = Test.FauxReturn.GenerateService(Test.MockRequest(request =>
+            var service = Test.GenerateService<IReturnService>(Test.MockRequest(request =>
                 {
                     request.Method.Should().BeEquivalentTo(HttpMethod.Get);
                     request.RequestUri.ToString().Should().BeEquivalentTo("http://return/123");

@@ -16,9 +16,11 @@
 
 using DHaven.Faux.Compiler;
 using DHaven.Faux.HttpSupport;
+using System;
 
 namespace DHaven.Faux
 {
+    [Obsolete("The libarary is moving toward the dependency injection route rather than globally accessible Faux objects.  See HostBuilder for standalone applications.")]
     public class Faux<TService>
         where TService : class // Really an interface
     {

@@ -47,6 +47,12 @@ namespace DHaven.Faux.Compiler
             UpdateReferences(GetType().GetTypeInfo().Assembly);
         }
 
+        public bool RegisterInterface<TService>()
+            where TService : class
+        {
+            return RegisterInterface(typeof(TService).GetTypeInfo());
+        }
+
         /// <summary>
         /// Registers a new type to be compiled.
         /// </summary>
