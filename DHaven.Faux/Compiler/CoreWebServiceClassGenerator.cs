@@ -23,6 +23,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using TypeInfo = System.Reflection.TypeInfo;
 
 namespace DHaven.Faux.Compiler
@@ -33,9 +34,9 @@ namespace DHaven.Faux.Compiler
 
         private readonly ILogger logger;
         
-        public CoreWebServiceClassGenerator(CompilerConfig configuration, ILogger<CoreWebServiceClassGenerator> logger)
+        public CoreWebServiceClassGenerator(IOptions<CompilerConfig> options, ILogger<CoreWebServiceClassGenerator> logger)
         {
-            Config = configuration;
+            Config = options.Value;
             this.logger = logger;
 
             if (string.IsNullOrEmpty(Config.RootNamespace))

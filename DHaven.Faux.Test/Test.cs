@@ -15,8 +15,6 @@
 
 using System;
 using System.Net.Http;
-using System.Reflection;
-using DHaven.Faux.Compiler;
 using DHaven.Faux.HttpSupport;
 using DHaven.Faux.Test.HttpMethods;
 using DHaven.Faux.Test.ParameterTypes;
@@ -27,29 +25,16 @@ namespace DHaven.Faux.Test
 {
     public static class Test
     {
-        static Test()
-        {
-            FauxConfiguration.ClassGenerator.Config.OutputSourceFiles = true;
-            FauxConfiguration.ClassGenerator.Config.SourceFilePath = "./dhaven-faux";
+        private static readonly FauxCollection collection = new FauxCollection(reg => reg
+                .Register<ITodoService>()
+                .Register<IReturnService>()
+                .Register<IBlobStore>());
 
-            Compiler = new WebServiceCompiler(FauxConfiguration.ClassGenerator);
-            Compiler.RegisterInterface<ITodoService>();
-            Compiler.RegisterInterface<IReturnService>();
-            Compiler.RegisterInterface<IBlobStore>();
-            Assembly = Compiler.Compile(null);
-        }
-
-        private static WebServiceCompiler Compiler { get; }
-        private static Assembly Assembly { get; }
 
         public static TService GenerateService<TService>(IHttpClient client)
             where TService : class
         {
-            var service = typeof(TService).GetTypeInfo();
-            var className = Compiler.GetImplementationName(service);
-            var type = Assembly.GetType(className);
-            var constructor = type?.GetConstructor(new Type[] { typeof(IHttpClient) });
-            return constructor?.Invoke(new object[] { client }) as TService;
+            return collection.CreateInstance<TService>(client);
         }
 
 

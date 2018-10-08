@@ -29,8 +29,7 @@ namespace DHaven.Faux.Compiler
         private readonly ISet<string> references = new HashSet<string>();
         private readonly IDictionary<TypeInfo,string> registeredTypes = new Dictionary<TypeInfo,string>();
 
-        private readonly ILogger<WebServiceCompiler> logger =
-            FauxConfiguration.LogFactory.CreateLogger<WebServiceCompiler>();
+        private readonly ILogger<WebServiceCompiler> logger;
 
         private readonly IWebServiceClassGenerator serviceClassGenerator;
 
@@ -41,8 +40,9 @@ namespace DHaven.Faux.Compiler
         private readonly HashSet<Assembly> sourceAssemblies = new HashSet<Assembly>();
 #endif
 
-        public WebServiceCompiler(IWebServiceClassGenerator classGenerator)
+        public WebServiceCompiler(IWebServiceClassGenerator classGenerator, ILogger<WebServiceCompiler> logger)
         {
+            this.logger = logger;
             serviceClassGenerator = classGenerator;
             UpdateReferences(GetType().GetTypeInfo().Assembly);
         }

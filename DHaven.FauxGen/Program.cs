@@ -57,8 +57,9 @@ namespace DHaven.FauxGen
         {
             services.AddSingleton(new LoggerFactory().AddConsole().AddDebug());
             services.AddLogging();
+            services.AddOptions();
 
-            services.AddFaux(Configuration, (registrar) => { });
+            services.AddFaux(Configuration);
 
             return services;
         }

@@ -16,9 +16,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
+using System.Linq;
 using System.Reflection;
 using DHaven.Faux.Compiler;
+using DHaven.Faux.DependencyInjection;
 using DHaven.Faux.HttpSupport;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -34,40 +35,6 @@ namespace DHaven.Faux
     public static class FauxConfiguration
     {
         /// <summary>
-        /// Default configuration if "UseFaux" is never called.
-        /// </summary>
-        static FauxConfiguration()
-        {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddEnvironmentVariables();
-
-            UseFaux(null, builder.Build());
-        }
-
-        [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
-        public static IApplicationBuilder UseFaux(this IApplicationBuilder app, IConfiguration configuration)
-        {
-            Configuration = configuration;
-
-            var logFactory = new LoggerFactory();
-            logFactory.AddDebug(LogLevel.Trace);
-            LogFactory = logFactory;
-
-            // TODO: this stuff should ne in the services section.
-            var factory = new DiscoveryClientFactory(new DiscoveryOptions(Configuration));
-            var handler = new DiscoveryHttpClientHandler(factory.CreateClient() as IDiscoveryClient,
-                LogFactory.CreateLogger<DiscoveryHttpClientHandler>());
-
-            Client = new HttpClientWrapper(handler);
-            ClassGenerator = new CoreWebServiceClassGenerator(new CompilerConfig(Configuration), LogFactory.CreateLogger<CoreWebServiceClassGenerator>());
-
-            return app;
-        }
-
-        /// <summary>
         /// Register an Interface for Faux to generate the actual instance.
         /// </summary>
         /// <param name="services"></param>
@@ -78,8 +45,12 @@ namespace DHaven.Faux
         public static IServiceCollection AddFaux(this IServiceCollection services, IConfiguration configuration, Action<IFauxRegistrar> registrations = null)
         {
             services.Configure<CompilerConfig>(configuration.GetSection("Faux"));
-            services.AddSingleton<CompilerConfig>();
             services.AddSingleton<IWebServiceClassGenerator, CoreWebServiceClassGenerator>();
+
+            var registrar = new Registrar();
+            registrations?.Invoke(registrar);
+
+            services.AddSingleton<IFauxRegistrar>(registrar);
             services.AddSingleton<WebServiceCompiler>();
 
             services.AddSingleton<IHttpClient>(provider => 
@@ -98,50 +69,16 @@ namespace DHaven.Faux
                 return new HttpClientWrapper(new DiscoveryHttpClientHandler(client, logger));
             });
 
-            if (registrations != null)
+            foreach (var info in registrar.GetRegisteredServices())
             {
-                var registrar = new Registrar();
-                registrations(registrar);
-
-                foreach (var info in registrar.GetRegisteredServices())
+                services.AddSingleton(info, (provider) =>
                 {
-                    services.AddSingleton(info, (provider) =>
-                    {
-                        IHttpClient client = provider.GetRequiredService<IHttpClient>();
-                        return TypeFactory.CreateInstance(info, Client);
-                    });
-                }
+                    IFauxFactory factory = provider.GetRequiredService<IFauxFactory>();
+                    return factory.Create(info);
+                });
             }
 
             return services;
-        }
-
-        public static IWebServiceClassGenerator ClassGenerator { get; private set; }
-
-        public static IHttpClient Client { get; private set; }
-
-        internal static IConfiguration Configuration { get; private set; }
-
-        internal static ILoggerFactory LogFactory { get; private set; }
-
-        private class Registrar : IFauxRegistrar
-        {
-            private readonly IList<TypeInfo> services = new List<TypeInfo>();
-
-            public IFauxRegistrar Register<TService>() where TService : class
-            {
-                TypeFactory.RegisterInterface<TService>();
-                services.Add(typeof(TService).GetTypeInfo());
-                return this;
-            }
-
-            public IEnumerable<TypeInfo> GetRegisteredServices()
-            {
-                foreach(var info in services)
-                {
-                    yield return info;
-                }
-            }
         }
     }
 }

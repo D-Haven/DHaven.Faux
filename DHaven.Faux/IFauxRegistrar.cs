@@ -1,4 +1,7 @@
-﻿namespace DHaven.Faux
+﻿using System.Collections.Generic;
+using System.Reflection;
+
+namespace DHaven.Faux
 {
     /// <summary>
     /// Used to register all the Faux interfaces for your application.
@@ -12,5 +15,11 @@
         /// <returns>the registrar to chain registrations</returns>
         IFauxRegistrar Register<TService>()
             where TService : class;
+
+        /// <summary>
+        /// Get all the registered services.
+        /// </summary>
+        /// <returns></returns>
+        IEnumerable<TypeInfo> GetRegisteredServices();
     }
 }

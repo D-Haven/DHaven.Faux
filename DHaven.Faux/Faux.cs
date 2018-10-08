@@ -20,21 +20,22 @@ using System;
 
 namespace DHaven.Faux
 {
-    [Obsolete("The libarary is moving toward the dependency injection route rather than globally accessible Faux objects.  See HostBuilder for standalone applications.")]
+    [Obsolete("The libarary is moving toward the dependency injection route rather than globally accessible Faux objects.  Use FauxCollection instead if you are not using Dependency Injection.")]
     public class Faux<TService>
         where TService : class // Really an interface
     {
+        private static FauxCollection collection = new FauxCollection(null);
         private TService service;
 
         public Faux()
         {
-            TypeFactory.RegisterInterface<TService>();
+            collection.RegisterInterface<TService>();
         }
 
         /// <summary>
         /// Gets the global instance of that service for the application.
         /// </summary>
-        public TService Service => service ?? (service = GenerateService(FauxConfiguration.Client));
+        public TService Service => service ?? (service = collection.CreateInstance<TService>());
 
         /// <summary>
         /// Usually called by tests, it generates a new instance every time, using the IHttpClient provided.
@@ -43,7 +44,7 @@ namespace DHaven.Faux
         /// <returns>the service</returns>
         public TService GenerateService(IHttpClient client)
         {
-            return TypeFactory.CreateInstance<TService>(client);
+            return collection.CreateInstance<TService>(client);
         }
     }
 }
