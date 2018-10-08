@@ -20,7 +20,7 @@ using System;
 
 namespace DHaven.Faux
 {
-    [Obsolete("The libarary is moving toward the dependency injection route rather than globally accessible Faux objects.  Use FauxCollection instead if you are not using Dependency Injection.")]
+    [Obsolete("Use FauxCollection instead if you are not using Dependency Injection.  FauxCollection enforces the right semantics.")]
     public class Faux<TService>
         where TService : class // Really an interface
     {

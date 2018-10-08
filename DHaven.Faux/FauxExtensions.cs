@@ -32,7 +32,7 @@ namespace DHaven.Faux
     /// <summary>
     /// Handle integration with built in dependency injection.
     /// </summary>
-    public static class FauxConfiguration
+    public static class FauxExtensions
     {
         /// <summary>
         /// Register an Interface for Faux to generate the actual instance.
@@ -44,6 +44,7 @@ namespace DHaven.Faux
         [SuppressMessage("ReSharper", "UnusedMember.Global")]
         public static IServiceCollection AddFaux(this IServiceCollection services, IConfiguration configuration, Action<IFauxRegistrar> registrations = null)
         {
+            services.AddDiscoveryClient(new DiscoveryOptions(configuration) { ClientType = DiscoveryClientType.EUREKA });
             services.Configure<CompilerConfig>(configuration.GetSection("Faux"));
             services.AddSingleton<IWebServiceClassGenerator, CoreWebServiceClassGenerator>();
 
@@ -52,18 +53,11 @@ namespace DHaven.Faux
 
             services.AddSingleton<IFauxRegistrar>(registrar);
             services.AddSingleton<WebServiceCompiler>();
+            services.AddSingleton<IFauxFactory, FauxFactory>();
 
             services.AddSingleton<IHttpClient>(provider => 
             {
                 IDiscoveryClient client = provider.GetService<IDiscoveryClient>();
-
-                // If the discovery client hasn't been created yet, we make it ourselves.
-                if(client == null)
-                {
-                    var factory = new DiscoveryClientFactory(new DiscoveryOptions(configuration));
-                    client = factory.CreateClient() as IDiscoveryClient;
-                }
-
                 ILogger<DiscoveryHttpClientHandler> logger = provider.GetRequiredService<ILogger<DiscoveryHttpClientHandler>>();
                 
                 return new HttpClientWrapper(new DiscoveryHttpClientHandler(client, logger));

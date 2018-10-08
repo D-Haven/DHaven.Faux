@@ -23,32 +23,20 @@ namespace DHaven.Faux
     {
         private static readonly Type[] ConstructorTypes = new Type[] { typeof(IHttpClient) };
         private readonly IServiceProvider serviceProvider;
-        private readonly WebServiceCompiler compiler;
-        private Assembly generatedAssembly;
+        private readonly IFauxFactory factory;
 
         public FauxCollection(Action<IFauxRegistrar> register = null)
         {
             var collection = new FauxServiceCollection();
             serviceProvider = ConfigureServices(collection, register).BuildFauxServiceProvider();
 
-            compiler = serviceProvider.GetRequiredService<WebServiceCompiler>();
-
-            generatedAssembly = compiler.Compile(null);
+            factory = serviceProvider.GetRequiredService<IFauxFactory>();
         }
 
-        public bool RegisterInterface<TService>()
+        internal void RegisterInterface<TService>()
             where TService : class
         {
-            var alreadyRegistered = compiler.RegisterInterface(typeof(TService).GetTypeInfo());
-
-            if (generatedAssembly == null) return alreadyRegistered;
-
-            lock (this)
-            {
-                Interlocked.Exchange(ref generatedAssembly, null);
-            }
-
-            return alreadyRegistered;
+            factory.RegisterInterface<TService>();
         }
 
         public TService CreateInstance<TService>()
@@ -65,24 +53,7 @@ namespace DHaven.Faux
 
         private object CreateInstance(TypeInfo service, IHttpClient client)
         {
-            EnsureAssemblyIsCreated();
-
-            var className = compiler.GetImplementationName(service);
-            var type = generatedAssembly.GetType(className);
-            var constructor = type?.GetConstructor(ConstructorTypes);
-            return constructor?.Invoke(new object[] { client });
-        }
-
-        private void EnsureAssemblyIsCreated()
-        {
-            if (generatedAssembly != null) return;
-
-            lock(this)
-            {
-                if (generatedAssembly != null) return;
-
-                Interlocked.Exchange(ref generatedAssembly, compiler.Compile(null));
-            }
+            return factory.Create(service, client);
         }
 
         private IServiceCollection ConfigureServices(IServiceCollection services, Action<IFauxRegistrar> register = null)

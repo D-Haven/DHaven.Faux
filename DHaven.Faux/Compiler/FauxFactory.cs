@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 
 namespace DHaven.Faux.Compiler
 {
@@ -10,7 +11,7 @@ namespace DHaven.Faux.Compiler
     {
         private readonly IHttpClient client;
         private readonly WebServiceCompiler compiler;
-        private readonly Assembly generatedAssembly;
+        private Assembly generatedAssembly;
 
         public FauxFactory(IFauxRegistrar registrar, WebServiceCompiler compiler, IHttpClient client)
         {
@@ -25,12 +26,27 @@ namespace DHaven.Faux.Compiler
             generatedAssembly = this.compiler.Compile(null);
         }
 
-        public object Create(TypeInfo type)
+        public void RegisterInterface<TService>()
+            where TService : class
+        {
+            if (!compiler.RegisterInterface<TService>())
+            {
+                // not already registered, so we need to recreate the assembly
+                Interlocked.Exchange(ref generatedAssembly, compiler.Compile(null));
+            }
+        }
+
+        public object Create(TypeInfo type, IHttpClient overrideHttpClient)
         {
             var classname = compiler.GetImplementationName(type);
             var info = generatedAssembly.GetType(classname).GetTypeInfo();
             var constructor = info?.GetConstructor(new Type[] { typeof(IHttpClient) });
-            return constructor?.Invoke(new object[] { client });
+            return constructor?.Invoke(new object[] { overrideHttpClient });
+        }
+
+        public object Create(TypeInfo type)
+        {
+            return Create(type, client);
         }
     }
 }

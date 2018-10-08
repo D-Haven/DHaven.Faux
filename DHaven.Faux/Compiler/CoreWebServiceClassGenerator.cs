@@ -36,7 +36,8 @@ namespace DHaven.Faux.Compiler
         
         public CoreWebServiceClassGenerator(IOptions<CompilerConfig> options, ILogger<CoreWebServiceClassGenerator> logger)
         {
-            Config = options.Value;
+            // This is temporary until I get the FauxServiceProvider working for options.
+            Config = options?.Value ?? new CompilerConfig();
             this.logger = logger;
 
             if (string.IsNullOrEmpty(Config.RootNamespace))
