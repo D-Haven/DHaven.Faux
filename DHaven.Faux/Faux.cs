@@ -14,7 +14,6 @@
 
 #endregion
 
-using DHaven.Faux.Compiler;
 using DHaven.Faux.HttpSupport;
 using System;
 

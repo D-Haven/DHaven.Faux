@@ -47,27 +47,14 @@ namespace DHaven.Faux.DependencyInjection
             // Special: Microsoft.Extensions.Options.IOptions`1[[??]]
             if (typeof(IOptions<>).IsAssignableFrom(serviceType))
             {
+                // TODO: FixMe
                 //var optionsFactory = GetService(typeof(IOptionsFactory<>)) as IOptionsFactory<>;
                 return null;
             }
 
-            ServiceDescriptor descriptor = services.FirstOrDefault(d=> AreSame(d.ServiceType, serviceType));
+            ServiceDescriptor descriptor = services.FirstOrDefault(d=> serviceType == d.ServiceType);
 
             return ResolveDescriptor(descriptor);
-        }
-
-
-        private bool AreSame(Type one, Type two)
-        {
-            bool matches = one.IsGenericType == two.IsGenericType;
-            matches = matches && one.GenericTypeArguments.Length == two.GenericTypeArguments.Length;
-
-            for(int i = 0; i < one.GenericTypeArguments.Length; i++)
-            {
-                matches = matches && AreSame(one.GenericTypeArguments[i], two.GenericTypeArguments[i]);
-            }
-
-            return matches && one.Equals(two);
         }
 
         private object ResolveDescriptor(ServiceDescriptor descriptor)
