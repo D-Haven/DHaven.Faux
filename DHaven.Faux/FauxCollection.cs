@@ -36,7 +36,7 @@ namespace DHaven.Faux
             factory.RegisterInterface<TService>();
         }
 
-        public TService CreateInstance<TService>()
+        public TService GetInstance<TService>()
             where TService : class
         {
             return serviceProvider.GetService<TService>();
@@ -53,7 +53,7 @@ namespace DHaven.Faux
             return factory.Create(service, client);
         }
 
-        private static IServiceCollection ConfigureServices(IServiceCollection services, Action<IFauxRegistrar> register = null)
+        private static IServiceCollection ConfigureServices(IServiceCollection services, Action<IFauxRegistrar> register)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())

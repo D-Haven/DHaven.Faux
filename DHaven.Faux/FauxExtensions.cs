@@ -14,14 +14,9 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Reflection;
 using DHaven.Faux.Compiler;
-using DHaven.Faux.DependencyInjection;
 using DHaven.Faux.HttpSupport;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -37,8 +32,9 @@ namespace DHaven.Faux
         /// <summary>
         /// Register an Interface for Faux to generate the actual instance.
         /// </summary>
-        /// <param name="services"></param>
-        /// <typeparam name="TService"></typeparam>
+        /// <param name="services">the IServiceCollection we are populating</param>
+        /// <param name="configuration">the IConfiguration root object for services</param>
+        /// <param name="registrations">the registrations to ensure are available.</param>
         /// <returns></returns>
         [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
         [SuppressMessage("ReSharper", "UnusedMember.Global")]
@@ -57,8 +53,8 @@ namespace DHaven.Faux
 
             services.AddSingleton<IHttpClient>(provider => 
             {
-                IDiscoveryClient client = provider.GetService<IDiscoveryClient>();
-                ILogger<DiscoveryHttpClientHandler> logger = provider.GetRequiredService<ILogger<DiscoveryHttpClientHandler>>();
+                var client = provider.GetService<IDiscoveryClient>();
+                var logger = provider.GetRequiredService<ILogger<DiscoveryHttpClientHandler>>();
                 
                 return new HttpClientWrapper(new DiscoveryHttpClientHandler(client, logger));
             });
@@ -67,7 +63,7 @@ namespace DHaven.Faux
             {
                 services.AddSingleton(info, (provider) =>
                 {
-                    IFauxFactory factory = provider.GetRequiredService<IFauxFactory>();
+                    var factory = provider.GetRequiredService<IFauxFactory>();
                     return factory.Create(info);
                 });
             }

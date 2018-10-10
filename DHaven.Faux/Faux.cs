@@ -23,18 +23,17 @@ namespace DHaven.Faux
     public class Faux<TService>
         where TService : class // Really an interface
     {
-        private static FauxCollection collection = new FauxCollection(null);
         private TService service;
 
         public Faux()
         {
-            collection.RegisterInterface<TService>();
+            FauxRealm.Collection.RegisterInterface<TService>();
         }
 
         /// <summary>
         /// Gets the global instance of that service for the application.
         /// </summary>
-        public TService Service => service ?? (service = collection.CreateInstance<TService>());
+        public TService Service => service ?? (service = FauxRealm.Collection.GetInstance<TService>());
 
         /// <summary>
         /// Usually called by tests, it generates a new instance every time, using the IHttpClient provided.
@@ -43,7 +42,16 @@ namespace DHaven.Faux
         /// <returns>the service</returns>
         public TService GenerateService(IHttpClient client)
         {
-            return collection.CreateInstance<TService>(client);
+            return FauxRealm.Collection.CreateInstance<TService>(client);
         }
+    }
+
+    /// <summary>
+    /// Only used as the static holder of the shared FauxCollection for all Faux objects.  This preserves the behavior
+    /// from before, but uses the new way of building services.
+    /// </summary>
+    internal static class FauxRealm
+    {
+        internal static FauxCollection Collection { get; } = new FauxCollection();
     }
 }

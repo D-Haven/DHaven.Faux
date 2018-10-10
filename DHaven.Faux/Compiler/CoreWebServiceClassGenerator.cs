@@ -74,7 +74,7 @@ namespace DHaven.Faux.Compiler
             using (logger.BeginScope("Generator {0}:", className))
             {
                 var serviceName = typeInfo.GetCustomAttribute<FauxClientAttribute>().Name;
-                var baseRoute = typeInfo.GetCustomAttribute<RouteAttribute>()?.BaseRoute ?? string.Empty;
+                var baseRoute = typeInfo.GetCustomAttribute<FauxClientAttribute>().Route ?? string.Empty;
                 var sealedString = Config.GenerateSealedClasses ? "sealed" : string.Empty;
 
                 logger.LogTrace("Beginning to generate source");

@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
-namespace DHaven.Faux.DependencyInjection
+namespace DHaven.Faux.Compiler
 {
     internal class Registrar : IFauxRegistrar
     {
@@ -13,6 +14,7 @@ namespace DHaven.Faux.DependencyInjection
             return this;
         }
 
+        [SuppressMessage("ReSharper", "LoopCanBeConvertedToQuery", Justification = "Intentionally not providing reference.")]
         public IEnumerable<TypeInfo> GetRegisteredServices()
         {
             foreach (var info in services)
