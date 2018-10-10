@@ -21,6 +21,7 @@
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.1.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1" />
     <PackageReference Include="microsoft.extensions.logging" Version="2.1.1" />
     <PackageReference Include="microsoft.extensions.logging.configuration" Version="2.1.1" />
     <PackageReference Include="microsoft.extensions.logging.debug" Version="2.1.1" />

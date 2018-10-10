@@ -12,7 +12,7 @@ namespace DHaven.FauxGen
 {
     internal static class Program
     {
-        private static ILogger Logger;
+        private static ILogger logger;
 
         private static void Main(string[] args)
         {
@@ -53,13 +53,13 @@ namespace DHaven.FauxGen
             }
 
             compiler.Compile(outputAssembly);
-            Logger.LogInformation($"Successfully compiled the assembly {outputAssembly}");
+            logger.LogInformation($"Successfully compiled the assembly {outputAssembly}");
         }
 
         private static IServiceCollection ConfigureServices(IServiceCollection services)
         {
             var logFactory = new LoggerFactory().AddConsole().AddDebug();
-            Logger = logFactory.CreateLogger(typeof(Program));
+            logger = logFactory.CreateLogger(typeof(Program));
             services.AddSingleton(logFactory);
             services.AddLogging();
             services.AddOptions();

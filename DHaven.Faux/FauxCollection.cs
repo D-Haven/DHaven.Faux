@@ -1,5 +1,4 @@
 ﻿using DHaven.Faux.Compiler;
-using DHaven.Faux.DependencyInjection;
 using DHaven.Faux.HttpSupport;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
 using System.Reflection;
-using System.Threading;
 
 namespace DHaven.Faux
 {
@@ -21,14 +19,13 @@ namespace DHaven.Faux
     /// </remarks>
     public class FauxCollection
     {
-        private static readonly Type[] ConstructorTypes = new Type[] { typeof(IHttpClient) };
         private readonly IServiceProvider serviceProvider;
         private readonly IFauxFactory factory;
 
         public FauxCollection(Action<IFauxRegistrar> register = null)
         {
-            var collection = new FauxServiceCollection();
-            serviceProvider = ConfigureServices(collection, register).BuildFauxServiceProvider();
+            var collection = new ServiceCollection();
+            serviceProvider = ConfigureServices(collection, register).BuildServiceProvider();
 
             factory = serviceProvider.GetRequiredService<IFauxFactory>();
         }
@@ -42,7 +39,7 @@ namespace DHaven.Faux
         public TService CreateInstance<TService>()
             where TService : class
         {
-            return serviceProvider.GetService<TService>() as TService;
+            return serviceProvider.GetService<TService>();
         }
 
         public TService CreateInstance<TService>(IHttpClient client)
@@ -56,7 +53,7 @@ namespace DHaven.Faux
             return factory.Create(service, client);
         }
 
-        private IServiceCollection ConfigureServices(IServiceCollection services, Action<IFauxRegistrar> register = null)
+        private static IServiceCollection ConfigureServices(IServiceCollection services, Action<IFauxRegistrar> register = null)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
