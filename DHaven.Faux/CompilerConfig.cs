@@ -4,7 +4,7 @@ namespace DHaven.Faux
 {
     public class CompilerConfig
     {
-        private const string DefaultNamespace = "DHaven.Feign.Wrapper";
+        private const string DefaultNamespace = "DHaven.Faux.Wrapper";
 
         public CompilerConfig()
         {
