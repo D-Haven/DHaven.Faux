@@ -15,11 +15,20 @@
     <RootNamespace>DHaven.FauxGen</RootNamespace>
     <StartupObject>DHaven.FauxGen.Program</StartupObject>
     <AssemblyName>FauxGen</AssemblyName>
+    <Version>1.2.0</Version>
+    <PackageReleaseNotes>Updated to use the latest code from DHaven.Faux.</PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="commandlineparser" Version="2.3.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1" />
+    <PackageReference Include="microsoft.extensions.logging.console" Version="2.1.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DHaven.Faux\DHaven.Faux.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Extensions.DependencyInjection, Version=1.0.2.0, Culture=neutral, PublicKeyToken=adb9793829ddae60">
+      <HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.dependencyinjection\1.0.2\lib\netstandard1.1\Microsoft.Extensions.DependencyInjection.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

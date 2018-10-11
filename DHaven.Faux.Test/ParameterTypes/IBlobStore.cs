@@ -18,8 +18,7 @@ using System.Threading.Tasks;
 
 namespace DHaven.Faux.Test.ParameterTypes
 {
-    [FauxClient("blob-service")]
-    [Route("/api/storage")]
+    [FauxClient("blob-service", "/api/storage")]
     public interface IBlobStore
     {
         [HttpPost("/")]

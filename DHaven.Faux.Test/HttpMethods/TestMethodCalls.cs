@@ -16,7 +16,6 @@
 using System.Net;
 using System.Net.Http;
 using System.Text;
-using DHaven.Faux.HttpSupport;
 using Xunit;
 using FluentAssertions;
 using System;
@@ -28,7 +27,7 @@ namespace DHaven.Faux.Test.HttpMethods
         [Fact]
         public void FauxGeneratesCallWithHttpGet()
         {
-            DiscoverySupport.Client = Test.MockRequest(
+            var service = Test.GenerateService<ITodoService>(Test.MockRequest(
                 req =>
                 {
                     req.Method.Should().BeEquivalentTo(HttpMethod.Get);
@@ -37,8 +36,7 @@ namespace DHaven.Faux.Test.HttpMethods
                 new HttpResponseMessage(HttpStatusCode.OK)
                 {
                     Content = new StringContent("[]", Encoding.UTF8, "application/json")
-                });
-            var service = Test.FauxTodo.Service;
+                }));
 
             var result = service.List();
             result.Should().BeEmpty();
@@ -47,15 +45,13 @@ namespace DHaven.Faux.Test.HttpMethods
         [Fact]
         public void FauxGeneratesDeleteWithPathValue()
         {
-            DiscoverySupport.Client = Test.MockRequest(
+            var service = Test.GenerateService<ITodoService>(Test.MockRequest(
                 req =>
                 {
                     req.Method.Should().BeEquivalentTo(HttpMethod.Delete);
                     req.RequestUri.ToString().Should().BeEquivalentTo("http://todo/21");
-                 },
-                new HttpResponseMessage(HttpStatusCode.NoContent));
-            
-            var service = Test.FauxTodo.Service;
+                },
+                new HttpResponseMessage(HttpStatusCode.NoContent)));
 
             service.Delete(21);
         }
@@ -63,7 +59,7 @@ namespace DHaven.Faux.Test.HttpMethods
         [Fact]
         public void FauxGeneratesPutWithObject()
         {
-            DiscoverySupport.Client = Test.MockRequest(
+            var service = Test.GenerateService<ITodoService>(Test.MockRequest(
                 req =>
                 {
                     req.Method.Should().BeEquivalentTo(HttpMethod.Put);
@@ -73,9 +69,7 @@ namespace DHaven.Faux.Test.HttpMethods
                 {
                     Headers = { Location = new Uri("http://todo/22") },
                     Content = new StringContent("22")
-                });
-
-            var service = Test.FauxTodo.Service;
+                }));
 
             var id = service.Add("Another thing to do");
             id.Should().Be(22);
@@ -84,7 +78,7 @@ namespace DHaven.Faux.Test.HttpMethods
         [Fact]
         public void GetByIdGetsObject()
         {
-            DiscoverySupport.Client = Test.MockRequest(
+            var service = Test.GenerateService<ITodoService>(Test.MockRequest(
                 request =>
                 {
                     request.Method.Should().BeEquivalentTo(HttpMethod.Get);
@@ -94,9 +88,7 @@ namespace DHaven.Faux.Test.HttpMethods
                 {
                     Headers = { Location = new Uri("http://todo/21") },
                     Content = new StringContent("'This is a todo item'", Encoding.UTF8, "application/json")
-                });
-
-            var service = Test.FauxTodo.Service;
+                }));
 
             service.Get(21).Should().BeEquivalentTo("This is a todo item");
         }

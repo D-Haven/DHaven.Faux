@@ -30,7 +30,7 @@ namespace DHaven.Faux.Test.ParameterTypes
         [Fact]
         public async Task GeneratesRequestHeadersWhenAllValuesArePresent()
         {
-            DiscoverySupport.Client = Test.MockRequest(
+            var service = Test.GenerateService<IBlobStore>(Test.MockRequest(
                 req =>
                 {
                     req.Method.Should().BeEquivalentTo(HttpMethod.Post);
@@ -42,10 +42,8 @@ namespace DHaven.Faux.Test.ParameterTypes
                 },
                 new HttpResponseMessage(HttpStatusCode.NoContent)
                 {
-                    Headers = { ETag = new EntityTagHeaderValue("\"1234567890abcdef\"")}
-                });
-            
-            var service = Test.FauxBlob.Service;
+                    Headers = { ETag = new EntityTagHeaderValue("\"1234567890abcdef\"") }
+                }));
             var content = new byte[10240];
 
             using (var stream = new MemoryStream(content))
@@ -58,7 +56,7 @@ namespace DHaven.Faux.Test.ParameterTypes
         [Fact]
         public async Task GeneratesFullUriWhenPathVariablesArePresent()
         {
-            DiscoverySupport.Client = Test.MockRequest(
+            var service = Test.GenerateService<IBlobStore>(Test.MockRequest(
                 req =>
                 {
                     req.Method.Should().BeEquivalentTo(HttpMethod.Get);
@@ -69,9 +67,7 @@ namespace DHaven.Faux.Test.ParameterTypes
                 new HttpResponseMessage(HttpStatusCode.NoContent)
                 {
                     Content = new StreamContent(new MemoryStream(new byte[10240]))
-                });
-            
-            var service = Test.FauxBlob.Service;
+                }));
 
             using (var stream = await service.Get("1234567890abcdef", "attachment; filename=\"test2.png\""))
             {
