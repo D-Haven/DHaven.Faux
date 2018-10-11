@@ -11,8 +11,9 @@
     <RepositoryUrl>https://github.com/bloritsch/DHaven.Faux</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageTags>webservice client generator</PackageTags>
-    <Version>1.1.0</Version>
-    <PackageReleaseNotes>Added support for Net Framework 4.6+.  There are differences in the class generation and loading that required some conditional compilation.  NOTE: generated assemblies through FauxGen work just fine.</PackageReleaseNotes>
+    <Version>1.2.0</Version>
+    <PackageReleaseNotes>Major refactoring to play nicely with NetCore dependency injection, while still supporting NetFramework code.</PackageReleaseNotes>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis" Version="2.9.0" />
@@ -20,6 +21,7 @@
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.1.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1" />
     <PackageReference Include="microsoft.extensions.logging" Version="2.1.1" />
     <PackageReference Include="microsoft.extensions.logging.configuration" Version="2.1.1" />
     <PackageReference Include="microsoft.extensions.logging.debug" Version="2.1.1" />

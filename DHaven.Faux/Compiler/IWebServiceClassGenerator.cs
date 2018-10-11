@@ -5,25 +5,9 @@ namespace DHaven.Faux.Compiler
     public interface IWebServiceClassGenerator
     {
         /// <summary>
-        /// Gets or sets the location where source files are written to disk.
+        /// Gets the compiler configuration
         /// </summary>
-        string SourceFilePath { get; set; }
-
-        /// <summary>
-        /// Gets or sets the flag to write source files to disk.
-        /// </summary>
-        bool OutputSourceFiles { get; set; }
-
-        /// <summary>
-        /// Gets or sets the root namespace to use for generated classes.
-        /// </summary>
-        string RootNamespace { get; set; }
-
-        /// <summary>
-        /// Gets or sets the flag to ensure the generated classes are sealed (cannot be inherited).
-        /// Default is true.
-        /// </summary>
-        bool GenerateSealedClasses { get; set; }
+        CompilerConfig Config { get; }
 
         /// <summary>
         /// Generate the source code for the interface represented by the type.

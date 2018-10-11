@@ -29,8 +29,7 @@ namespace DHaven.Faux.Compiler
         private readonly ISet<string> references = new HashSet<string>();
         private readonly IDictionary<TypeInfo,string> registeredTypes = new Dictionary<TypeInfo,string>();
 
-        private readonly ILogger<WebServiceCompiler> logger =
-            FauxConfiguration.LogFactory.CreateLogger<WebServiceCompiler>();
+        private readonly ILogger<WebServiceCompiler> logger;
 
         private readonly IWebServiceClassGenerator serviceClassGenerator;
 
@@ -41,10 +40,17 @@ namespace DHaven.Faux.Compiler
         private readonly HashSet<Assembly> sourceAssemblies = new HashSet<Assembly>();
 #endif
 
-        public WebServiceCompiler(IWebServiceClassGenerator classGenerator)
+        public WebServiceCompiler(IWebServiceClassGenerator classGenerator, ILogger<WebServiceCompiler> logger)
         {
+            this.logger = logger;
             serviceClassGenerator = classGenerator;
             UpdateReferences(GetType().GetTypeInfo().Assembly);
+        }
+
+        public bool RegisterInterface<TService>()
+            where TService : class
+        {
+            return RegisterInterface(typeof(TService).GetTypeInfo());
         }
 
         /// <summary>
@@ -96,8 +102,15 @@ namespace DHaven.Faux.Compiler
 
             foreach(var dependency in assembly.GetReferencedAssemblies())
             {
-                logger.LogTrace($"Loading dependency {dependency.FullName}");
-                UpdateReferences(Assembly.Load(dependency));
+                try
+                {
+                    logger.LogTrace($"Loading dependency {dependency.FullName}");
+                    UpdateReferences(Assembly.Load(dependency));
+                }
+                catch(Exception ex)
+                {
+                    logger.LogWarning(ex, "Could not load dependant assembly, compilation may fail");
+                }
             }
         }
     }

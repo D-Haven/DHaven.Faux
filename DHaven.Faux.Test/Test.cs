@@ -25,18 +25,18 @@ namespace DHaven.Faux.Test
 {
     public static class Test
     {
-        static Test()
+        private static readonly FauxCollection collection = new FauxCollection(reg => reg
+                .Register<ITodoService>()
+                .Register<IReturnService>()
+                .Register<IBlobStore>());
+
+
+        public static TService GenerateService<TService>(IHttpClient client)
+            where TService : class
         {
-            FauxConfiguration.ClassGenerator.OutputSourceFiles = true;
-            FauxConfiguration.ClassGenerator.SourceFilePath = "./dhaven-faux";
-            FauxTodo = new Faux<ITodoService>();
-            FauxReturn = new Faux<IReturnService>();
-            FauxBlob = new Faux<IBlobStore>();
+            return collection.CreateInstance<TService>(client);
         }
-        
-        public static readonly Faux<ITodoService> FauxTodo;
-        public static readonly Faux<IReturnService> FauxReturn;
-        public static readonly Faux<IBlobStore> FauxBlob;
+
 
         public static IHttpClient MockRequest(Action<HttpRequestMessage> verifyRequest,
             HttpResponseMessage response)

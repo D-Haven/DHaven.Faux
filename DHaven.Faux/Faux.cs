@@ -14,11 +14,12 @@
 
 #endregion
 
-using DHaven.Faux.Compiler;
 using DHaven.Faux.HttpSupport;
+using System;
 
 namespace DHaven.Faux
 {
+    [Obsolete("Use FauxCollection instead if you are not using Dependency Injection.  FauxCollection enforces the right semantics.")]
     public class Faux<TService>
         where TService : class // Really an interface
     {
@@ -26,13 +27,13 @@ namespace DHaven.Faux
 
         public Faux()
         {
-            TypeFactory.RegisterInterface<TService>();
+            FauxRealm.Collection.RegisterInterface<TService>();
         }
 
         /// <summary>
         /// Gets the global instance of that service for the application.
         /// </summary>
-        public TService Service => service ?? (service = GenerateService(FauxConfiguration.Client));
+        public TService Service => service ?? (service = FauxRealm.Collection.GetInstance<TService>());
 
         /// <summary>
         /// Usually called by tests, it generates a new instance every time, using the IHttpClient provided.
@@ -41,7 +42,16 @@ namespace DHaven.Faux
         /// <returns>the service</returns>
         public TService GenerateService(IHttpClient client)
         {
-            return TypeFactory.CreateInstance<TService>(client);
+            return FauxRealm.Collection.CreateInstance<TService>(client);
         }
+    }
+
+    /// <summary>
+    /// Only used as the static holder of the shared FauxCollection for all Faux objects.  This preserves the behavior
+    /// from before, but uses the new way of building services.
+    /// </summary>
+    internal static class FauxRealm
+    {
+        internal static FauxCollection Collection { get; } = new FauxCollection();
     }
 }
