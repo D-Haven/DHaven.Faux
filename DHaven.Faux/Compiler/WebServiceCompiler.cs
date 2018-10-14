@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -80,6 +81,21 @@ namespace DHaven.Faux.Compiler
             
             logger.LogDebug($"Finished compiling the syntax tree for {fullyQualifiedClassName} generated from {type.FullName}");
             return true;
+        }
+
+        public Assembly Compile(string assemblyName)
+        {
+            bool somethingToCompile;
+            
+#if NETSTANDARD
+            somethingToCompile = syntaxTrees.Any();
+#else
+            somethingToCompile = codeSources.Any();
+#endif
+
+            // Always return something, the entry assembly will be able to load implementations since the assembly
+            // is a dependency.  The platform compiled assembly will load what was generated at runtime.
+            return somethingToCompile ? PlatformCompile(assemblyName) : Assembly.GetEntryAssembly();
         }
 
         public string GetImplementationName(TypeInfo type)

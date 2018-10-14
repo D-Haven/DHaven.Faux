@@ -11,7 +11,7 @@ namespace DHaven.Faux.Compiler
     partial class WebServiceCompiler
     {
 #if NETSTANDARD
-        public Assembly Compile(string assemblyName)
+        private Assembly PlatformCompile(string assemblyName)
         {
             using (var stream = string.IsNullOrEmpty(assemblyName) 
                 ? (Stream)new MemoryStream() 
