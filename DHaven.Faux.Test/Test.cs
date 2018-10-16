@@ -25,16 +25,12 @@ namespace DHaven.Faux.Test
 {
     public static class Test
     {
-        private static readonly FauxCollection collection = new FauxCollection(reg => reg
-                .Register<ITodoService>()
-                .Register<IReturnService>()
-                .Register<IBlobStore>());
-
+        private static readonly FauxCollection Collection = new FauxCollection(new ResponseHeaderTest());
 
         public static TService GenerateService<TService>(IHttpClient client)
             where TService : class
         {
-            return collection.CreateInstance<TService>(client);
+            return Collection.CreateInstance<TService>(client);
         }
 
 

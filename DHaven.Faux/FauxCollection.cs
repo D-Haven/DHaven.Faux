@@ -22,18 +22,12 @@ namespace DHaven.Faux
         private readonly IServiceProvider serviceProvider;
         private readonly IFauxFactory factory;
 
-        public FauxCollection(Action<IFauxRegistrar> register = null)
+        public FauxCollection(object application)
         {
             var collection = new ServiceCollection();
-            serviceProvider = ConfigureServices(collection, register).BuildServiceProvider();
+            serviceProvider = ConfigureServices(collection, application).BuildServiceProvider();
 
             factory = serviceProvider.GetRequiredService<IFauxFactory>();
-        }
-
-        internal void RegisterInterface<TService>()
-            where TService : class
-        {
-            factory.RegisterInterface<TService>();
         }
 
         public TService GetInstance<TService>()
@@ -53,7 +47,7 @@ namespace DHaven.Faux
             return factory.Create(service, client);
         }
 
-        private static IServiceCollection ConfigureServices(IServiceCollection services, Action<IFauxRegistrar> register)
+        private static IServiceCollection ConfigureServices(IServiceCollection services, object application)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -64,7 +58,7 @@ namespace DHaven.Faux
             services.AddLogging();
             services.AddOptions();
 
-            services.AddFaux(builder.Build(), register);
+            services.AddFaux(builder.Build(), application);
 
             return services;
         }
