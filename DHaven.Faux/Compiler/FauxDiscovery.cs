@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace DHaven.Faux.Compiler
 {
@@ -11,18 +12,25 @@ namespace DHaven.Faux.Compiler
     {
         private readonly Task<IDictionary<Type,Type>> fauxMapping;
         private readonly ICollection<Type> unregistered = new Collection<Type>();
-        private readonly ISet<string> references = new HashSet<string>();
-        private readonly ISet<Assembly> assemblyReferences = new HashSet<Assembly>();
+        private readonly IDictionary<string,Assembly> references = new Dictionary<string,Assembly>();
         private readonly IDictionary<TypeInfo,string> generatedTypes = new Dictionary<TypeInfo, string>();
+        private readonly ILogger<FauxDiscovery> logger;
 
-        internal FauxDiscovery(Assembly startingAssembly)
+        internal FauxDiscovery(Assembly startingAssembly, ILogger<FauxDiscovery> log)
         {
+            logger = log;
             fauxMapping = Task.Run(
                 (Func<IDictionary<Type,Type>>)(() =>
             {
                 var types = new Dictionary<Type,Type>();
 
+                logger.LogDebug($"Finding all [FauxClient] interfaces starting from {startingAssembly.FullName}");
                 DiscoverMappings(startingAssembly, types);
+
+                if (types.Count + unregistered.Count == 0)
+                {
+                    logger.LogWarning($"Unable to find any [FauxClient] interfaces in {startingAssembly.FullName} or it's dependencies");
+                }
                 
                 return types;
             }));
@@ -48,14 +56,14 @@ namespace DHaven.Faux.Compiler
         {
             await fauxMapping;
 
-            return references;
+            return references.Values.Select(dependency => dependency.Location);
         }
 
         public async Task<IEnumerable<Assembly>> GetReferenceAssemblies()
         {
             await fauxMapping;
 
-            return assemblyReferences;
+            return references.Values;
         }
 
         public void RegisterType(TypeInfo fauxInterface, string fullyQualifiedName)
@@ -65,24 +73,24 @@ namespace DHaven.Faux.Compiler
 
         private void DiscoverMappings(Assembly assembly, IDictionary<Type,Type> types)
         {
-            var referenceLocation = assembly.Location;
-
-            if (references.Contains(referenceLocation))
+            if (references.ContainsKey(assembly.FullName))
             {
                 return;
             }
   
-            references.Add(referenceLocation);
-            assemblyReferences.Add(assembly);
+            references.Add(assembly.FullName, assembly);
 
             if (!(assembly.FullName.StartsWith("System.")
-                  || assembly.FullName.StartsWith("FauGen")
+                  || assembly.FullName.StartsWith("FauxGen")
                   || assembly.FullName.StartsWith("Microsoft.Extensions.")))
             {
+                logger.LogTrace($"Inspecting {assembly.FullName}");
+
                 foreach (var type in assembly.GetTypes())
                 {
                     if (IsFauxInterface(type) && !types.ContainsKey(type))
                     {
+                        logger.LogTrace($"Found interface {type.FullName}, marked as unregistered.");
                         unregistered.Add(type.GetTypeInfo());
                     }
                     else
@@ -90,10 +98,12 @@ namespace DHaven.Faux.Compiler
                         var faux = type.GetInterfaces().FirstOrDefault(IsFauxInterface);
                         if (faux == null) continue;
 
+                        logger.LogTrace($"Found implementation {type.FullName} for interface {faux.FullName}, marked as registered.");
                         types.Add(faux, type);
 
                         if (unregistered.Contains(faux))
                         {
+                            logger.LogTrace($"Interface {faux.FullName} was marked as unregistered, removing from that list.");
                             // If we found the interface before the implementation, add it here.
                             unregistered.Remove(faux);
                         }
@@ -105,7 +115,10 @@ namespace DHaven.Faux.Compiler
             {
                 try
                 {
-                    DiscoverMappings(Assembly.Load(dependency), types);
+                    if (!references.ContainsKey(dependency.FullName))
+                    {
+                        DiscoverMappings(Assembly.Load(dependency), types);
+                    }
                 }
                 catch (Exception)
                 {

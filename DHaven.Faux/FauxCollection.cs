@@ -22,10 +22,10 @@ namespace DHaven.Faux
         private readonly IServiceProvider serviceProvider;
         private readonly IFauxFactory factory;
 
-        public FauxCollection(object application)
+        public FauxCollection(Type starterType)
         {
             var collection = new ServiceCollection();
-            serviceProvider = ConfigureServices(collection, application).BuildServiceProvider();
+            serviceProvider = ConfigureServices(collection, starterType).BuildServiceProvider();
 
             factory = serviceProvider.GetRequiredService<IFauxFactory>();
         }
@@ -47,7 +47,7 @@ namespace DHaven.Faux
             return factory.Create(service, client);
         }
 
-        private static IServiceCollection ConfigureServices(IServiceCollection services, object application)
+        private static IServiceCollection ConfigureServices(IServiceCollection services, Type starterType)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -55,10 +55,8 @@ namespace DHaven.Faux
                 .AddEnvironmentVariables();
 
             services.AddSingleton(new LoggerFactory().AddDebug());
-            services.AddLogging();
-            services.AddOptions();
 
-            services.AddFaux(builder.Build(), application);
+            services.AddFaux(builder.Build(), starterType);
 
             return services;
         }

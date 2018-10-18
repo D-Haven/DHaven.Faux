@@ -9,12 +9,11 @@ namespace ExampleClient
     {
         private static void Main()
         {
-            var wrapper = new Faux<IValuesService>();
-            var blobWrapper = new Faux<IBlobService>();
+            var collection = new FauxCollection();
 
             try
             {
-                Task.Run(() => RunBlob(blobWrapper.Service)).Wait();
+                Task.Run(() => RunBlob(collection.GetInstance<IBlobService>())).Wait();
             }
             catch (Exception ex)
             {
@@ -23,7 +22,7 @@ namespace ExampleClient
 
             try
             {
-                Task.Run(() => RunExample(wrapper.Service)).Wait();
+                Task.Run(() => RunExample(collection.GetInstance<IValuesService>())).Wait();
             }
             catch (Exception ex)
             {

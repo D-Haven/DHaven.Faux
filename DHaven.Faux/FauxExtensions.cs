@@ -13,13 +13,16 @@
 // limitations under the License.
 #endregion
 
+using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using DHaven.Faux.Compiler;
 using DHaven.Faux.HttpSupport;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Configuration;
 using Steeltoe.Discovery.Client;
 
 namespace DHaven.Faux
@@ -34,14 +37,19 @@ namespace DHaven.Faux
         /// </summary>
         /// <param name="services">the IServiceCollection we are populating</param>
         /// <param name="configuration">the IConfiguration root object for services</param>
-        /// <param name="application">reference to the application class</param>
+        /// <param name="starterType">a type in the highest level assembly you want searched</param>
         /// <returns>the configured service collection</returns>
         [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
         [SuppressMessage("ReSharper", "UnusedMethodReturnValue.Global")]
         public static IServiceCollection AddFaux(this IServiceCollection services, IConfiguration configuration,
-            object application = null)
+            Type starterType = null)
         {
-            var fauxDiscovery = new FauxDiscovery(application?.GetType().Assembly ?? Assembly.GetEntryAssembly());
+            services.AddLogging();
+            services.AddOptions();
+
+            // Really need to handle the faux discovery adding new services at runtime
+            var logFactory = new LoggerFactory().AddDebug(LogLevel.Trace);
+            var fauxDiscovery = new FauxDiscovery(starterType?.Assembly ?? Assembly.GetEntryAssembly(), logFactory.CreateLogger<FauxDiscovery>());
             services.AddDiscoveryClient(new DiscoveryOptions(configuration) { ClientType = DiscoveryClientType.EUREKA });
             services.Configure<CompilerConfig>(configuration.GetSection("Faux"));
             services.AddSingleton<IWebServiceClassGenerator, CoreWebServiceClassGenerator>();
@@ -61,7 +69,7 @@ namespace DHaven.Faux
 
             foreach (var info in fauxDiscovery.GetAllFauxInterfaces().Result)
             {
-                services.AddSingleton(info, (provider) =>
+                services.AddSingleton(info, provider =>
                 {
                     var factory = provider.GetRequiredService<IFauxFactory>();
                     return factory.Create(info);

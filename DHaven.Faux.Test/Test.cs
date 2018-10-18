@@ -16,16 +16,13 @@
 using System;
 using System.Net.Http;
 using DHaven.Faux.HttpSupport;
-using DHaven.Faux.Test.HttpMethods;
-using DHaven.Faux.Test.ParameterTypes;
-using DHaven.Faux.Test.ReturnTypes;
 using Moq;
 
 namespace DHaven.Faux.Test
 {
     public static class Test
     {
-        private static readonly FauxCollection Collection = new FauxCollection(new ResponseHeaderTest());
+        private static readonly FauxCollection Collection = new FauxCollection(typeof(Test));
 
         public static TService GenerateService<TService>(IHttpClient client)
             where TService : class

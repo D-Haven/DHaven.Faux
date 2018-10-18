@@ -18,10 +18,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Extensions.Logging;
 using TypeInfo = System.Reflection.TypeInfo;
+
+#if NETSTANDARD
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+#endif
 
 namespace DHaven.Faux.Compiler
 {
@@ -78,12 +81,10 @@ namespace DHaven.Faux.Compiler
 
         public Assembly Compile(string assemblyName)
         {
-            bool somethingToCompile;
-            
 #if NETSTANDARD
-            somethingToCompile = syntaxTrees.Any();
+            var somethingToCompile = syntaxTrees.Any();
 #else
-            somethingToCompile = codeSources.Any();
+            var somethingToCompile = codeSources.Any();
 #endif
 
             // Always return something, the entry assembly will be able to load implementations since the assembly

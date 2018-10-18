@@ -5,8 +5,7 @@ using DHaven.Faux;
 
 namespace ExampleClient
 {
-    [FauxClient("valueService")]
-    [Route("api/values")]
+    [FauxClient("valueService", "api/values")]
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public interface IValuesService
     {
