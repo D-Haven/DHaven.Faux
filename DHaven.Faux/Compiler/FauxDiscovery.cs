@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -36,15 +37,15 @@ namespace DHaven.Faux.Compiler
             }));
         }
 
-        public async Task<IEnumerable<TypeInfo>> GetAllFauxInterfaces()
+        public IEnumerable<TypeInfo> GetAllFauxInterfaces()
         {
-            return (await fauxMapping).Keys.Select(t => t.GetTypeInfo())
+            return fauxMapping.SpinWaitResult().Keys.Select(t => t.GetTypeInfo())
                 .Union(unregistered.Select(t => t.GetTypeInfo()));
         }
 
-        public async Task<string> GetImplementationNameFor(TypeInfo fauxInterface)
+        public string GetImplementationNameFor(TypeInfo fauxInterface)
         {
-            (await fauxMapping).TryGetValue(fauxInterface.AsType(), out var implementation);
+            fauxMapping.SpinWaitResult().TryGetValue(fauxInterface.AsType(), out var implementation);
             var className = implementation?.FullName;
 
             if (className == null) generatedTypes.TryGetValue(fauxInterface, out className);
@@ -52,16 +53,16 @@ namespace DHaven.Faux.Compiler
             return className;
         }
 
-        public async Task<IEnumerable<string>> GetReferenceLocations()
+        public IEnumerable<string> GetReferenceLocations()
         {
-            await fauxMapping;
+            fauxMapping.SpinWaitResult();
 
             return references.Values.Select(dependency => dependency.Location);
         }
 
-        public async Task<IEnumerable<Assembly>> GetReferenceAssemblies()
+        public IEnumerable<Assembly> GetReferenceAssemblies()
         {
-            await fauxMapping;
+            fauxMapping.SpinWaitResult();
 
             return references.Values;
         }
@@ -130,6 +131,27 @@ namespace DHaven.Faux.Compiler
         private static bool IsFauxInterface(Type type)
         {
             return type.IsInterface && type.GetCustomAttribute<FauxClientAttribute>() != null;
+        }
+    }
+
+    internal static class TaskExtensions
+    {
+        /// <summary>
+        /// This is sort of a hack, but the only way to handle the asynchronous task and get the
+        /// results on a one core processor is to yield the current thread so that it can finish.
+        /// Prevents deadlock on single core VMs like AppVeyor free tier.
+        /// </summary>
+        /// <typeparam name="T">the return type of the task</typeparam>
+        /// <param name="task">the task we are waiting for</param>
+        /// <returns>the result of the task</returns>
+        internal static T SpinWaitResult<T>(this Task<T> task)
+        {
+            while (task.Status == TaskStatus.Running)
+            {
+                Thread.Sleep(1);
+            }
+
+            return task.Result;
         }
     }
 }

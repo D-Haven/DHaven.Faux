@@ -46,7 +46,7 @@ namespace DHaven.Faux.Compiler
             serviceClassGenerator = classGenerator;
             this.fauxDiscovery = fauxDiscovery;
             
-            foreach(var service in fauxDiscovery.GetAllFauxInterfaces().Result)
+            foreach(var service in fauxDiscovery.GetAllFauxInterfaces())
             {
                 RegisterInterface(service);
             }
@@ -60,7 +60,7 @@ namespace DHaven.Faux.Compiler
         {
             logger.LogDebug($"Registering the interface: {type.FullName}");
 
-            var fullyQualifiedClassName = fauxDiscovery.GetImplementationNameFor(type).Result;
+            var fullyQualifiedClassName = fauxDiscovery.GetImplementationNameFor(type);
             if (fullyQualifiedClassName != null)
             {
                 // already registered
@@ -94,7 +94,7 @@ namespace DHaven.Faux.Compiler
 
         public string GetImplementationName(TypeInfo type)
         {
-            return fauxDiscovery.GetImplementationNameFor(type).Result;
+            return fauxDiscovery.GetImplementationNameFor(type);
         }
     }
 

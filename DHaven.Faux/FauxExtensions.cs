@@ -67,7 +67,7 @@ namespace DHaven.Faux
                 return new HttpClientWrapper(new DiscoveryHttpClientHandler(client, logger));
             });
 
-            foreach (var info in fauxDiscovery.GetAllFauxInterfaces().Result)
+            foreach (var info in fauxDiscovery.GetAllFauxInterfaces())
             {
                 services.AddSingleton(info, provider =>
                 {
