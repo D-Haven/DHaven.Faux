@@ -11,7 +11,7 @@ namespace DHaven.Faux.Compiler
     partial class WebServiceCompiler
     {
 #if NETSTANDARD
-        public Assembly Compile(string assemblyName)
+        private Assembly PlatformCompile(string assemblyName)
         {
             using (var stream = string.IsNullOrEmpty(assemblyName) 
                 ? (Stream)new MemoryStream() 
@@ -19,7 +19,7 @@ namespace DHaven.Faux.Compiler
             {
                 var compilation = CSharpCompilation.Create(assemblyName ?? Path.GetRandomFileName())
                     .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
-                    .AddReferences(references.Select(location => MetadataReference.CreateFromFile(location)))
+                    .AddReferences(fauxDiscovery.GetReferenceLocations().Select(location => MetadataReference.CreateFromFile(location)))
                     .AddSyntaxTrees(syntaxTrees);
 
                 var result = compilation.Emit(stream);

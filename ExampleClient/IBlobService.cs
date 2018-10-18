@@ -4,8 +4,7 @@ using DHaven.Faux;
 
 namespace ExampleClient
 {
-    [FauxClient("blob-service")]
-    [Route("api/storage")]
+    [FauxClient("blob-service", "api/storage")]
     public interface IBlobService
     {
         [HttpPut("/")]

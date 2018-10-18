@@ -18,7 +18,7 @@
     <EmbeddedResource Remove="faux-generated\**" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DHaven.Faux" Version="1.1.0" />
+    <PackageReference Include="DHaven.Faux" Version="1.2.64" />
     <PackageReference Include="Steeltoe.Discovery.Client" Version="1.1.0" />
   </ItemGroup>
   <ItemGroup>

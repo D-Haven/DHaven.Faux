@@ -16,102 +16,85 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Extensions.Logging;
 using TypeInfo = System.Reflection.TypeInfo;
+
+#if NETSTANDARD
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+#endif
 
 namespace DHaven.Faux.Compiler
 {
     public partial class WebServiceCompiler
     {
-        private readonly ISet<string> references = new HashSet<string>();
-        private readonly IDictionary<TypeInfo,string> registeredTypes = new Dictionary<TypeInfo,string>();
-
         private readonly ILogger<WebServiceCompiler> logger;
-
+        private readonly FauxDiscovery fauxDiscovery;
         private readonly IWebServiceClassGenerator serviceClassGenerator;
 
 #if NETSTANDARD
         private readonly List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
 #else
         private readonly List<string> codeSources = new List<string>();
-        private readonly HashSet<Assembly> sourceAssemblies = new HashSet<Assembly>();
 #endif
 
-        public WebServiceCompiler(IWebServiceClassGenerator classGenerator, ILogger<WebServiceCompiler> logger)
+        public WebServiceCompiler(FauxDiscovery fauxDiscovery, IWebServiceClassGenerator classGenerator, ILogger<WebServiceCompiler> logger)
         {
             this.logger = logger;
             serviceClassGenerator = classGenerator;
-            UpdateReferences(GetType().GetTypeInfo().Assembly);
-        }
-
-        public bool RegisterInterface<TService>()
-            where TService : class
-        {
-            return RegisterInterface(typeof(TService).GetTypeInfo());
+            this.fauxDiscovery = fauxDiscovery;
+            
+            foreach(var service in fauxDiscovery.GetAllFauxInterfaces())
+            {
+                RegisterInterface(service);
+            }
         }
 
         /// <summary>
         /// Registers a new type to be compiled.
         /// </summary>
         /// <param name="type">the type to register</param>
-        /// <returns>true if this is a new registration or false if it was already registered</returns>
-        public bool RegisterInterface(TypeInfo type)
+        public void RegisterInterface(TypeInfo type)
         {
             logger.LogDebug($"Registering the interface: {type.FullName}");
 
-            if (registeredTypes.TryGetValue(type, out var fullyQualifiedClassName))
+            var fullyQualifiedClassName = fauxDiscovery.GetImplementationNameFor(type);
+            if (fullyQualifiedClassName != null)
             {
-                return false;
+                // already registered
+                return;
             }
             
-            UpdateReferences(type.Assembly);
             var sourceCode = serviceClassGenerator.GenerateSource(type, out fullyQualifiedClassName);
-            registeredTypes.Add(type, fullyQualifiedClassName);
+            fauxDiscovery.RegisterType(type, fullyQualifiedClassName);
             
 #if NETSTANDARD
             syntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(sourceCode));
 #else
             codeSources.Add(sourceCode);
-            sourceAssemblies.Add(type.Assembly);
 #endif
             
             logger.LogDebug($"Finished compiling the syntax tree for {fullyQualifiedClassName} generated from {type.FullName}");
-            return true;
+        }
+
+        public Assembly Compile(string assemblyName)
+        {
+#if NETSTANDARD
+            var somethingToCompile = syntaxTrees.Any();
+#else
+            var somethingToCompile = codeSources.Any();
+#endif
+
+            // Always return something, the entry assembly will be able to load implementations since the assembly
+            // is a dependency.  The platform compiled assembly will load what was generated at runtime.
+            return somethingToCompile ? PlatformCompile(assemblyName) : Assembly.GetEntryAssembly();
         }
 
         public string GetImplementationName(TypeInfo type)
         {
-            registeredTypes.TryGetValue(type, out var fullyQualifiedClassName);
-            return fullyQualifiedClassName;
-        }
-
-        private void UpdateReferences(Assembly assembly)
-        {
-            var referenceLocation = assembly.Location;
-
-            if (references.Contains(referenceLocation))
-            {
-                return;
-            }
-
-            logger.LogTrace($"Registering reference to {assembly.FullName}");
-            references.Add(referenceLocation);
-
-            foreach(var dependency in assembly.GetReferencedAssemblies())
-            {
-                try
-                {
-                    logger.LogTrace($"Loading dependency {dependency.FullName}");
-                    UpdateReferences(Assembly.Load(dependency));
-                }
-                catch(Exception ex)
-                {
-                    logger.LogWarning(ex, "Could not load dependant assembly, compilation may fail");
-                }
-            }
+            return fauxDiscovery.GetImplementationNameFor(type);
         }
     }
 

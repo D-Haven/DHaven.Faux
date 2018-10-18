@@ -9,12 +9,6 @@ namespace DHaven.Faux.Compiler
     public interface IFauxFactory
     {
         /// <summary>
-        /// Register a service later in the application.  Only supported
-        /// while the old Faux&lt;TService&gt; remains.
-        /// </summary>
-        /// <typeparam name="TService">the service interface to register</typeparam>
-        void RegisterInterface<TService>() where TService : class;
-        /// <summary>
         /// Create the requested service.  Uses IHttpClient provided
         /// by the system.
         /// </summary>
