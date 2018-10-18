@@ -55,9 +55,7 @@ All you need to do is register faux in your services startup:
 public void ConfigureServices(IServiceCollection services)
 {
     // Add framework services.
-    services.AddFaux(Configuration, reg => reg
-            .Register<IFortuneService>()
-            .Register<IBlobService>());
+    services.AddFaux(Configuration);
             
     services.AddMvc();
 }
@@ -70,10 +68,13 @@ support it, but it's just as important to support the less complicated way of do
 For that, we have the FauxCollection class.  It hides the dependency injection away from you,
 and allows you to use the services directly.
 
+NOTE: if you are running unit tests you may need to add an anchor type to let Faux search
+within the assembly it belongs to.  Anytime the entry assembly (test runners) loads your
+assembly dynamically, it's something you'll have to do.  The AddFaux() above also allows
+you to do that.
+
 ----
-var collection = new FauxCollection(reg => reg
-            .Register<IFortuneService>()
-            .Register<IBlobService>());
+var collection = new FauxCollection(typeof(MyTest));
 
 var fortuneService = collection.GetInstance<IFortuneService>();
 ----
