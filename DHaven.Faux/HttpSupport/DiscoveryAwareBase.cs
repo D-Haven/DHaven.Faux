@@ -24,17 +24,17 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using DHaven.Faux.Compiler;
 using Newtonsoft.Json;
-// ReSharper disable MemberCanBePrivate.Global
 
 namespace DHaven.Faux.HttpSupport
 {
     /// <summary>
-    /// Base class for the implementations, helps with otherwise tricky things like
+    /// Base class for the generated implementations, helps with otherwise tricky things like
     /// path values, etc.
     /// </summary>
-    // ReSharper disable once UnusedMember.Global
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
     public abstract class DiscoveryAwareBase
     {
         private readonly Uri baseUri;
@@ -69,7 +69,7 @@ namespace DHaven.Faux.HttpSupport
 
         protected HttpResponseMessage Invoke(HttpRequestMessage message)
         {
-            return InvokeAsync(message).Result;
+            return InvokeAsync(message).SpinWaitResult();
         }
 
         protected async Task<HttpResponseMessage> InvokeAsync(HttpRequestMessage message)
@@ -98,7 +98,7 @@ namespace DHaven.Faux.HttpSupport
 
         protected TResponse ConvertToObject<TResponse>(HttpResponseMessage responseMessage)
         {
-            return ConvertToObjectAsync<TResponse>(responseMessage).Result;
+            return ConvertToObjectAsync<TResponse>(responseMessage).SpinWaitResult();
         }
 
         protected static T GetHeaderValue<T>(HttpResponseMessage responseMessage, string headerName)
