@@ -15,14 +15,12 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Reflection;
 using DHaven.Faux.Compiler;
 using DHaven.Faux.HttpSupport;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Configuration;
 using Steeltoe.Discovery.Client;
 
 namespace DHaven.Faux

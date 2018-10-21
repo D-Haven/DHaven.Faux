@@ -86,8 +86,18 @@ namespace DHaven.Faux.Compiler
                 classBuilder.AppendLine(
                     $"    public {sealedString} class {className} : DHaven.Faux.HttpSupport.DiscoveryAwareBase, {typeInfo.FullName}");
                 classBuilder.AppendLine("    {");
-                classBuilder.AppendLine($"        public {className}(DHaven.Faux.HttpSupport.IHttpClient client)");
-                classBuilder.AppendLine($"            : base(client, \"{serviceName}\", \"{baseRoute}\") {{ }}");
+                classBuilder.AppendLine("        private readonly Microsoft.Extensions.Logging.ILogger 仮logger;");
+                classBuilder.AppendLine($"        private readonly {className} 仮fallback;");
+                classBuilder.AppendLine("        private readonly Steeltoe.CircuitBreaker.Hystrix.IHystrixCommandGroupKey 仮groupKey;");
+                classBuilder.AppendLine($"        public {className}(DHaven.Faux.HttpSupport.IHttpClient client,");
+                classBuilder.AppendLine("                           Microsoft.Extensions.Logging.ILogger logger,");
+                classBuilder.AppendLine($"                           {className} fallback)");
+                classBuilder.AppendLine($"            : base(client, \"{serviceName}\", \"{baseRoute}\")");
+                classBuilder.AppendLine("        {");
+                classBuilder.AppendLine("            仮logger = logger;");
+                classBuilder.AppendLine("            仮fallback = fallback;");
+                classBuilder.AppendLine($"            仮groupKey = Steeltoe.CircuitBreaker.Hystrix.HystrixCommandGroupKeyDefault.AsKey(\"{serviceName}\");");
+                classBuilder.AppendLine("        }");
 
                 foreach (var method in typeInfo.GetMethods())
                 {
@@ -157,8 +167,22 @@ namespace DHaven.Faux.Compiler
             classBuilder.Append(string.Join(", ", method.GetParameters().Select(p => $"{ToCompilableName(p.ParameterType, p.IsOut)} {p.Name}")));
             classBuilder.AppendLine(")");
             classBuilder.AppendLine("        {");
-            classBuilder.AppendLine("            var 仮variables = new System.Collections.Generic.Dictionary<string,object>();");
-            classBuilder.AppendLine("            var 仮reqParams = new System.Collections.Generic.Dictionary<string,string>();");
+            classBuilder.AppendLine($"            var 仮options = new Steeltoe.CircuitBreaker.Hystrix.HystrixCommandOptions(仮groupKey, Steeltoe.CircuitBreaker.Hystrix.HystrixCommandKeyDefault.AsKey(nameof({method.Name})));");
+            
+            if (isAsyncCall)
+            {
+                var taskType = isVoid ? "DHaven.Faux.HttpSupport.HystrixTask" : $"DHaven.Faux.HttpSupport.HystrixTask<{ToCompilableName(returnType)}>";
+                classBuilder.AppendLine($"            var 仮command = new {taskType}(仮options, System.Threading.Tasks.Task.Run(async () =>");
+            }
+            else
+            {
+                var commandType = isVoid ? "Steeltoe.CircuitBreaker.Hystrix.HystrixCommand" : $"Steeltoe.CircuitBreaker.Hystrix.HystrixCommand<{ToCompilableName(returnType)}>";
+                classBuilder.AppendLine($"            var 仮command = new {commandType}(仮options, () =>");
+            }
+
+            classBuilder.AppendLine("                {");
+            classBuilder.AppendLine("                    var 仮variables = new System.Collections.Generic.Dictionary<string,object>();");
+            classBuilder.AppendLine("                    var 仮reqParams = new System.Collections.Generic.Dictionary<string,string>();");
 
             var contentHeaders = new Dictionary<string, ParameterInfo>();
             var requestHeaders = new Dictionary<string, ParameterInfo>();
@@ -179,12 +203,12 @@ namespace DHaven.Faux.Compiler
                 AttributeInterpreter.InterpretResponseHeaderInParameters(parameter, isAsyncCall, ref responseHeaders);
             }
 
-            classBuilder.AppendLine($"            var 仮request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\", 仮variables, 仮reqParams);");
+            classBuilder.AppendLine($"                    var 仮request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\", 仮variables, 仮reqParams);");
             var hasContent = AttributeInterpreter.CreateContentObjectIfSpecified(bodyAttr, bodyParam, classBuilder);
 
             foreach (var entry in requestHeaders)
             {
-                classBuilder.AppendLine($"            仮request.Headers.Add(\"{entry.Key}\", {entry.Value.Name}{(entry.Value.ParameterType.IsClass ? "?" : "")}.ToString());");
+                classBuilder.AppendLine($"                    仮request.Headers.Add(\"{entry.Key}\", {entry.Value.Name}{(entry.Value.ParameterType.IsClass ? "?" : "")}.ToString());");
             }
 
             if (hasContent)
@@ -192,19 +216,19 @@ namespace DHaven.Faux.Compiler
                 // when setting content we can apply the contentHeaders
                 foreach (var entry in contentHeaders)
                 {
-                    classBuilder.AppendLine($"            仮content.Headers.Add(\"{entry.Key}\", {entry.Value.Name}{(entry.Value.ParameterType.IsClass ? "?" : "")}.ToString());");
+                    classBuilder.AppendLine($"                    仮content.Headers.Add(\"{entry.Key}\", {entry.Value.Name}{(entry.Value.ParameterType.IsClass ? "?" : "")}.ToString());");
                 }
 
-                classBuilder.AppendLine("            仮request.Content = 仮content;");
+                classBuilder.AppendLine("                    仮request.Content = 仮content;");
             }
 
             classBuilder.AppendLine(isAsyncCall
-                ? "            var 仮response = await InvokeAsync(仮request);"
-                : "            var 仮response = Invoke(仮request);");
+                ? "                    var 仮response = await InvokeAsync(仮request);"
+                : "                    var 仮response = Invoke(仮request);");
 
             foreach (var entry in responseHeaders)
             {
-                classBuilder.AppendLine($"            {entry.Value.Name} = GetHeaderValue<{ToCompilableName(entry.Value.ParameterType)}>(仮response, \"{entry.Key}\");");
+                classBuilder.AppendLine($"                    {entry.Value.Name} = GetHeaderValue<{ToCompilableName(entry.Value.ParameterType)}>(仮response, \"{entry.Key}\");");
             }
 
             if (!isVoid)
@@ -231,6 +255,36 @@ namespace DHaven.Faux.Compiler
                     AttributeInterpreter.ReturnContentObject(returnBodyAttribute, returnType, isAsyncCall, classBuilder);
                 }
             }
+
+            classBuilder.Append("                }");
+            if (isAsyncCall)
+            {
+                classBuilder.Append(")");
+            }
+            classBuilder.AppendLine(",");
+
+            classBuilder.Append("                ");
+            if (!isAsyncCall)
+            {
+                classBuilder.Append("() => ");
+            }
+            classBuilder.Append($"仮fallback?.{method.Name}(");
+            classBuilder.Append(string.Join(", ", method.GetParameters().Select(p => p.Name)));
+            classBuilder.Append(")");
+            if (!isVoid && method.ReturnType.IsValueType)
+            {
+                classBuilder.Append($" ?? default({ToCompilableName(method.ReturnType)})");
+            }
+            classBuilder.AppendLine(",");
+            
+            classBuilder.AppendLine("                仮logger);");
+
+            classBuilder.Append(isVoid
+                ? "            "
+                : "            return ");
+            classBuilder.AppendLine(isAsyncCall
+                ? "await 仮command.ExecuteAsync();"
+                : "仮command.Execute();");
 
             classBuilder.AppendLine("        }");
         }
