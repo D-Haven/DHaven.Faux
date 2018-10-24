@@ -23,7 +23,7 @@ namespace DHaven.Faux.Test.ReturnTypes
         public bool IsValid { get; set; }
     }
     
-    [FauxClient("return")]
+    //TODO: reanable [FauxClient("return")]
     public interface IReturnService
     {
         [HttpPut]

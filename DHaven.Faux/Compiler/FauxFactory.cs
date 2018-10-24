@@ -1,5 +1,6 @@
 ﻿using DHaven.Faux.HttpSupport;
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 
 namespace DHaven.Faux.Compiler
 {
@@ -8,11 +9,13 @@ namespace DHaven.Faux.Compiler
         private readonly IHttpClient client;
         private readonly WebServiceCompiler compiler;
         private readonly Assembly generatedAssembly;
+        private readonly ILogger<FauxFactory> logger;
 
-        public FauxFactory(WebServiceCompiler compiler, IHttpClient client)
+        public FauxFactory(WebServiceCompiler compiler, IHttpClient client, ILogger<FauxFactory> logger)
         {
             this.client = client;
             this.compiler = compiler;
+            this.logger = logger;
 
             generatedAssembly = this.compiler.Compile(null);
         }
@@ -21,8 +24,9 @@ namespace DHaven.Faux.Compiler
         {
             var classname = compiler.GetImplementationName(type);
             var info = generatedAssembly.GetType(classname).GetTypeInfo();
-            var constructor = info?.GetConstructor(new[] { typeof(IHttpClient) });
-            return constructor?.Invoke(new object[] { overrideHttpClient });
+            var constructor = info?.GetConstructor(new[] { typeof(IHttpClient), typeof(ILogger), type });
+            // TODO: create the fallback instance here.
+            return constructor?.Invoke(new object[] { overrideHttpClient, logger, null});
         }
 
         public object Create(TypeInfo type)

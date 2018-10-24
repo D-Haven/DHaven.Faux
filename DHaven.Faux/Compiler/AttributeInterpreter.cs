@@ -128,8 +128,8 @@ namespace DHaven.Faux.Compiler
             {
                 case Format.Json:
                     classBuilder.AppendLine(isAsyncCall
-                        ? $"            return await ConvertToObjectAsync<{CoreWebServiceClassGenerator.ToCompilableName(returnType)}>(仮response);"
-                        : $"            return ConvertToObject<{CoreWebServiceClassGenerator.ToCompilableName(returnType)}>(仮response);");
+                        ? $"            return await ConvertToObjectAsync<{CompilerUtils.ToCompilableName(returnType)}>(仮response);"
+                        : $"            return ConvertToObject<{CompilerUtils.ToCompilableName(returnType)}>(仮response);");
                     break;
                 case Format.Raw:
                     classBuilder.AppendLine(isAsyncCall
@@ -183,7 +183,7 @@ namespace DHaven.Faux.Compiler
 
         internal static void ReturnResponseHeader(ResponseHeaderAttribute responseHeaderAttribute, Type returnType, StringBuilder classBuilder)
         {
-            classBuilder.AppendLine($"            return GetHeaderValue<{CoreWebServiceClassGenerator.ToCompilableName(returnType)}>(仮response, \"{responseHeaderAttribute.Header}\");");
+            classBuilder.AppendLine($"            return GetHeaderValue<{CompilerUtils.ToCompilableName(returnType)}>(仮response, \"{responseHeaderAttribute.Header}\");");
         }
     }
 }

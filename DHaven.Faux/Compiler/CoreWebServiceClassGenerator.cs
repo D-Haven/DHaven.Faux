@@ -15,10 +15,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -32,7 +30,7 @@ namespace DHaven.Faux.Compiler
     {
         public CompilerConfig Config { get; }
 
-        private readonly ILogger logger;
+        private readonly ILogger<CoreWebServiceClassGenerator> logger;
         
         public CoreWebServiceClassGenerator(IOptions<CompilerConfig> options, ILogger<CoreWebServiceClassGenerator> logger)
         {
@@ -87,11 +85,11 @@ namespace DHaven.Faux.Compiler
                     $"    public {sealedString} class {className} : DHaven.Faux.HttpSupport.DiscoveryAwareBase, {typeInfo.FullName}");
                 classBuilder.AppendLine("    {");
                 classBuilder.AppendLine("        private readonly Microsoft.Extensions.Logging.ILogger 仮logger;");
-                classBuilder.AppendLine($"        private readonly {className} 仮fallback;");
+                classBuilder.AppendLine($"        private readonly {typeInfo.FullName} 仮fallback;");
                 classBuilder.AppendLine("        private readonly Steeltoe.CircuitBreaker.Hystrix.IHystrixCommandGroupKey 仮groupKey;");
                 classBuilder.AppendLine($"        public {className}(DHaven.Faux.HttpSupport.IHttpClient client,");
                 classBuilder.AppendLine("                           Microsoft.Extensions.Logging.ILogger logger,");
-                classBuilder.AppendLine($"                           {className} fallback)");
+                classBuilder.AppendLine($"                           {typeInfo.FullName} fallback)");
                 classBuilder.AppendLine($"            : base(client, \"{serviceName}\", \"{baseRoute}\")");
                 classBuilder.AppendLine("        {");
                 classBuilder.AppendLine("            仮logger = logger;");
@@ -153,30 +151,30 @@ namespace DHaven.Faux.Compiler
 
                 if(!isVoid)
                 {
-                    classBuilder.Append($"<{ToCompilableName(returnType)}>");
+                    classBuilder.Append($"<{CompilerUtils.ToCompilableName(returnType)}>");
                 }
             }
             else
             {
-                classBuilder.Append(isVoid ? "void" : ToCompilableName(returnType));
+                classBuilder.Append(isVoid ? "void" : CompilerUtils.ToCompilableName(returnType));
             }
 
             var attribute = method.GetCustomAttribute<HttpMethodAttribute>();
 
             classBuilder.Append($" {method.Name}(");
-            classBuilder.Append(string.Join(", ", method.GetParameters().Select(p => $"{ToCompilableName(p.ParameterType, p.IsOut)} {p.Name}")));
+            classBuilder.Append(string.Join(", ", method.GetParameters().Select(p => $"{CompilerUtils.ToCompilableName(p.ParameterType, p.IsOut)} {p.Name}")));
             classBuilder.AppendLine(")");
             classBuilder.AppendLine("        {");
             classBuilder.AppendLine($"            var 仮options = new Steeltoe.CircuitBreaker.Hystrix.HystrixCommandOptions(仮groupKey, Steeltoe.CircuitBreaker.Hystrix.HystrixCommandKeyDefault.AsKey(nameof({method.Name})));");
             
             if (isAsyncCall)
             {
-                var taskType = isVoid ? "DHaven.Faux.HttpSupport.HystrixTask" : $"DHaven.Faux.HttpSupport.HystrixTask<{ToCompilableName(returnType)}>";
+                var taskType = isVoid ? "DHaven.Faux.HttpSupport.HystrixTask" : $"DHaven.Faux.HttpSupport.HystrixTask<{CompilerUtils.ToCompilableName(returnType)}>";
                 classBuilder.AppendLine($"            var 仮command = new {taskType}(仮options, System.Threading.Tasks.Task.Run(async () =>");
             }
             else
             {
-                var commandType = isVoid ? "Steeltoe.CircuitBreaker.Hystrix.HystrixCommand" : $"Steeltoe.CircuitBreaker.Hystrix.HystrixCommand<{ToCompilableName(returnType)}>";
+                var commandType = isVoid ? "Steeltoe.CircuitBreaker.Hystrix.HystrixCommand" : $"Steeltoe.CircuitBreaker.Hystrix.HystrixCommand<{CompilerUtils.ToCompilableName(returnType)}>";
                 classBuilder.AppendLine($"            var 仮command = new {commandType}(仮options, () =>");
             }
 
@@ -203,7 +201,7 @@ namespace DHaven.Faux.Compiler
                 AttributeInterpreter.InterpretResponseHeaderInParameters(parameter, isAsyncCall, ref responseHeaders);
             }
 
-            classBuilder.AppendLine($"                    var 仮request = CreateRequest({ToCompilableName(attribute.Method)}, \"{attribute.Path}\", 仮variables, 仮reqParams);");
+            classBuilder.AppendLine($"                    var 仮request = CreateRequest({CompilerUtils.ToCompilableName(attribute.Method)}, \"{attribute.Path}\", 仮variables, 仮reqParams);");
             var hasContent = AttributeInterpreter.CreateContentObjectIfSpecified(bodyAttr, bodyParam, classBuilder);
 
             foreach (var entry in requestHeaders)
@@ -228,7 +226,7 @@ namespace DHaven.Faux.Compiler
 
             foreach (var entry in responseHeaders)
             {
-                classBuilder.AppendLine($"                    {entry.Value.Name} = GetHeaderValue<{ToCompilableName(entry.Value.ParameterType)}>(仮response, \"{entry.Key}\");");
+                classBuilder.AppendLine($"                    {entry.Value.Name} = GetHeaderValue<{CompilerUtils.ToCompilableName(entry.Value.ParameterType)}>(仮response, \"{entry.Key}\");");
             }
 
             if (!isVoid)
@@ -273,7 +271,7 @@ namespace DHaven.Faux.Compiler
             classBuilder.Append(")");
             if (!isVoid && method.ReturnType.IsValueType)
             {
-                classBuilder.Append($" ?? default({ToCompilableName(method.ReturnType)})");
+                classBuilder.Append($" ?? default({CompilerUtils.ToCompilableName(method.ReturnType)})");
             }
             classBuilder.AppendLine(",");
             
@@ -288,38 +286,5 @@ namespace DHaven.Faux.Compiler
 
             classBuilder.AppendLine("        }");
         }
-
-        private static string ToCompilableName(HttpMethod method)
-        {
-            var value = method.Method.Substring(0, 1) + method.Method.Substring(1).ToLower();
-            return $"System.Net.Http.HttpMethod.{value}";
-        }
-
-        private static string ToCompilableName(Type type, bool isOut)
-        {
-            var name = ToCompilableName(type);
-
-            return !isOut ? name : $"out {name}";
-        }
-
-        internal static string ToCompilableName(Type type)
-        {
-            var baseName = type.FullName;
-            Debug.Assert(baseName != null, nameof(baseName) + " != null");
-            
-            // If we have a ref or an out parameter, then Type.Name appends '&' to the end.
-            if (baseName.EndsWith("&"))
-            {
-                baseName = baseName.Substring(0, baseName.Length - 1);
-            }
-
-            if (!type.IsConstructedGenericType)
-            {
-                return baseName;
-            }
-
-            baseName = baseName.Substring(0, baseName.IndexOf('`'));
-            return $"{baseName}<{string.Join(",", type.GetGenericArguments().Select(ToCompilableName))}>";
-        }        
     }
 }
