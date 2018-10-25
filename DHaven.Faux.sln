@@ -13,10 +13,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.adoc = README.adoc
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExampleApi", "ExampleApi\ExampleApi.csproj", "{268BE497-8781-4F1D-809B-742CF659F759}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExampleClient", "ExampleClient\ExampleClient.csproj", "{0E280DD0-DAEC-4B89-814B-ED21BB933067}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DHaven.FauxGen", "DHaven.FauxGen\DHaven.FauxGen.csproj", "{D5381004-FD33-4FA4-8EF7-F50CDF3EA536}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DHaven.Faux.Test", "DHaven.Faux.Test\DHaven.Faux.Test.csproj", "{0EA6855A-0E49-44E7-96A6-D1BDA12DB1BE}"
@@ -31,14 +27,6 @@ Global
 		{61C35143-51F7-4B69-A582-111A9598147A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{61C35143-51F7-4B69-A582-111A9598147A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{61C35143-51F7-4B69-A582-111A9598147A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{268BE497-8781-4F1D-809B-742CF659F759}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{268BE497-8781-4F1D-809B-742CF659F759}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{268BE497-8781-4F1D-809B-742CF659F759}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{268BE497-8781-4F1D-809B-742CF659F759}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0E280DD0-DAEC-4B89-814B-ED21BB933067}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0E280DD0-DAEC-4B89-814B-ED21BB933067}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0E280DD0-DAEC-4B89-814B-ED21BB933067}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0E280DD0-DAEC-4B89-814B-ED21BB933067}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D5381004-FD33-4FA4-8EF7-F50CDF3EA536}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D5381004-FD33-4FA4-8EF7-F50CDF3EA536}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D5381004-FD33-4FA4-8EF7-F50CDF3EA536}.Release|Any CPU.ActiveCfg = Release|Any CPU
