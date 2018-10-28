@@ -30,7 +30,7 @@ namespace DHaven.Faux.Compiler
     {
         public CompilerConfig Config { get; }
 
-        private readonly ILogger<CoreWebServiceClassGenerator> logger;
+        private readonly ILogger logger;
         
         public CoreWebServiceClassGenerator(IOptions<CompilerConfig> options, ILogger<CoreWebServiceClassGenerator> logger)
         {
@@ -68,7 +68,6 @@ namespace DHaven.Faux.Compiler
 
             var className = typeInfo.FullName?.Replace(".", string.Empty);
             fullClassName = $"{Config.RootNamespace}.{className}";
-            var sourceCodeList = new List<string>();
 
             using (logger.BeginScope("Generator {0}:", className))
             {
@@ -88,12 +87,11 @@ namespace DHaven.Faux.Compiler
                         classBuilder.AppendLine(
                             $"public {sealedString} class {className} : DHaven.Faux.HttpSupport.DiscoveryAwareBase, {typeInfo.FullName}");
                         classBuilder.AppendLine("{");
-                        
+
                         using (var fieldBuilder = classBuilder.Indent())
                         {
                             fieldBuilder.AppendLine("private readonly Microsoft.Extensions.Logging.ILogger 仮logger;");
                             fieldBuilder.AppendLine($"private readonly {typeInfo.FullName} 仮fallback;");
-                            fieldBuilder.AppendLine("private readonly Steeltoe.CircuitBreaker.Hystrix.IHystrixCommandGroupKey 仮groupKey;");
                         }
 
                         using (var constructorBuilder = classBuilder.Indent())
@@ -107,8 +105,6 @@ namespace DHaven.Faux.Compiler
                             {
                                 insideCxrBuilder.AppendLine("仮logger = logger;");
                                 insideCxrBuilder.AppendLine("仮fallback = fallback;");
-                                insideCxrBuilder.AppendLine(
-                                    $"仮groupKey = Steeltoe.CircuitBreaker.Hystrix.HystrixCommandGroupKeyDefault.AsKey(\"{serviceName}\");");
                             }
 
                             constructorBuilder.AppendLine("}");
@@ -116,7 +112,7 @@ namespace DHaven.Faux.Compiler
 
                         foreach (var method in typeInfo.GetMethods())
                         {
-                            BuildMethod(classBuilder.Indent(), method);
+                            BuildMethod(classBuilder, method);
                         }
 
                         classBuilder.AppendLine("}");
@@ -142,8 +138,7 @@ namespace DHaven.Faux.Compiler
                         }
                     }
 
-                    sourceCodeList.Add(sourceCode);
-                    return sourceCodeList;
+                    return new[] {sourceCode};
                 }
             }
         }
@@ -184,141 +179,91 @@ namespace DHaven.Faux.Compiler
             classBuilder.Append(string.Join(", ", method.GetParameters().Select(CompilerUtils.ToParameterDeclaration)));
             classBuilder.AppendLine(")");
             classBuilder.AppendLine("{");
+
             using (var methodBuilder = classBuilder.Indent())
             {
                 methodBuilder.AppendLine(
-                    $"var 仮options = new Steeltoe.CircuitBreaker.Hystrix.HystrixCommandOptions(仮groupKey, Steeltoe.CircuitBreaker.Hystrix.HystrixCommandKeyDefault.AsKey(nameof({method.Name})));");
+                    "var 仮variables = new System.Collections.Generic.Dictionary<string,object>();");
+                methodBuilder.AppendLine(
+                    "var 仮reqParams = new System.Collections.Generic.Dictionary<string,string>();");
 
-                if (isAsyncCall)
+                var contentHeaders = new Dictionary<string, ParameterInfo>();
+                var requestHeaders = new Dictionary<string, ParameterInfo>();
+                var responseHeaders = new Dictionary<string, ParameterInfo>();
+                ParameterInfo bodyParam = null;
+                BodyAttribute bodyAttr = null;
+
+                foreach (var parameter in method.GetParameters())
                 {
-                    var taskType = isVoid
-                        ? "DHaven.Faux.HttpSupport.HystrixTask"
-                        : $"DHaven.Faux.HttpSupport.HystrixTask<{CompilerUtils.ToCompilableName(returnType)}>";
+                    AttributeInterpreter.InterpretPathValue(parameter, methodBuilder);
+                    AttributeInterpreter.InterpretRequestHeader(parameter, requestHeaders, contentHeaders);
+                    AttributeInterpreter.InterpretBodyParameter(parameter, ref bodyParam, ref bodyAttr);
+                    AttributeInterpreter.InterpretRequestParameter(parameter, methodBuilder);
+                    AttributeInterpreter.InterpretResponseHeaderInParameters(parameter, isAsyncCall,
+                        ref responseHeaders);
+                }
+
+                methodBuilder.AppendLine(
+                    $"var 仮request = CreateRequest({CompilerUtils.ToCompilableName(attribute.Method)}, \"{attribute.Path}\", 仮variables, 仮reqParams);");
+                var hasContent = AttributeInterpreter.CreateContentObjectIfSpecified(bodyAttr, bodyParam, classBuilder);
+
+                foreach (var entry in requestHeaders)
+                {
                     methodBuilder.AppendLine(
-                        $"var 仮command = new {taskType}(仮options, System.Threading.Tasks.Task.Run(async () =>");
-                }
-                else
-                {
-                    var commandType = isVoid
-                        ? "Steeltoe.CircuitBreaker.Hystrix.HystrixCommand"
-                        : $"Steeltoe.CircuitBreaker.Hystrix.HystrixCommand<{CompilerUtils.ToCompilableName(returnType)}>";
-                    methodBuilder.AppendLine($"var 仮command = new {commandType}(仮options, () =>");
+                        $"仮request.Headers.Add(\"{entry.Key}\", {entry.Value.Name}{(entry.Value.ParameterType.IsClass ? "?" : "")}.ToString());");
                 }
 
-                methodBuilder.AppendLine("{");
-                using (var lambdaBuilder = methodBuilder.Indent())
+                if (hasContent)
                 {
-                    lambdaBuilder.AppendLine("var 仮variables = new System.Collections.Generic.Dictionary<string,object>();");
-                    lambdaBuilder.AppendLine("var 仮reqParams = new System.Collections.Generic.Dictionary<string,string>();");
-
-                    var contentHeaders = new Dictionary<string, ParameterInfo>();
-                    var requestHeaders = new Dictionary<string, ParameterInfo>();
-                    var responseHeaders = new Dictionary<string, ParameterInfo>();
-                    ParameterInfo bodyParam = null;
-                    BodyAttribute bodyAttr = null;
-
-                    foreach (var parameter in method.GetParameters())
+                    // when setting content we can apply the contentHeaders
+                    foreach (var entry in contentHeaders)
                     {
-                        AttributeInterpreter.InterpretPathValue(parameter, lambdaBuilder);
-                        AttributeInterpreter.InterpretRequestHeader(parameter, requestHeaders, contentHeaders);
-                        AttributeInterpreter.InterpretBodyParameter(parameter, ref bodyParam, ref bodyAttr);
-                        AttributeInterpreter.InterpretRequestParameter(parameter, lambdaBuilder);
-                        AttributeInterpreter.InterpretResponseHeaderInParameters(parameter, isAsyncCall,
-                            ref responseHeaders);
+                        methodBuilder.AppendLine(
+                            $"仮content.Headers.Add(\"{entry.Key}\", {entry.Value.Name}{(entry.Value.ParameterType.IsClass ? "?" : "")}.ToString());");
                     }
 
-                    lambdaBuilder.AppendLine($"var 仮request = CreateRequest({CompilerUtils.ToCompilableName(attribute.Method)}, \"{attribute.Path}\", 仮variables, 仮reqParams);");
-                    var hasContent =
-                        AttributeInterpreter.CreateContentObjectIfSpecified(bodyAttr, bodyParam, lambdaBuilder);
-
-                    foreach (var entry in requestHeaders)
-                    {
-                        lambdaBuilder.AppendLine($"仮request.Headers.Add(\"{entry.Key}\", {entry.Value.Name}{(entry.Value.ParameterType.IsClass ? "?" : "")}.ToString());");
-                    }
-
-                    if (hasContent)
-                    {
-                        // when setting content we can apply the contentHeaders
-                        foreach (var entry in contentHeaders)
-                        {
-                            lambdaBuilder.AppendLine($"仮content.Headers.Add(\"{entry.Key}\", {entry.Value.Name}{(entry.Value.ParameterType.IsClass ? "?" : "")}.ToString());");
-                        }
-
-                        lambdaBuilder.AppendLine("仮request.Content = 仮content;");
-                    }
-
-                    lambdaBuilder.AppendLine(isAsyncCall
-                        ? "var 仮response = await InvokeAsync(仮request);"
-                        : "var 仮response = Invoke(仮request);");
-
-                    foreach (var entry in responseHeaders)
-                    {
-                        lambdaBuilder.AppendLine(
-                            $"{entry.Value.Name} = GetHeaderValue<{CompilerUtils.ToCompilableName(entry.Value.ParameterType)}>(仮response, \"{entry.Key}\");");
-                    }
-
-                    if (!isVoid)
-                    {
-                        var returnBodyAttribute = method.ReturnParameter?.GetCustomAttribute<BodyAttribute>();
-                        var returnResponseAttribute =
-                            method.ReturnParameter?.GetCustomAttribute<ResponseHeaderAttribute>();
-
-                        if (returnResponseAttribute != null && returnBodyAttribute != null)
-                        {
-                            throw new WebServiceCompileException(
-                                $"Cannot have different types of response attributes.  You had [{string.Join(", ", "Body", "ResponseHeader")}]");
-                        }
-
-                        if (returnResponseAttribute != null)
-                        {
-                            AttributeInterpreter.ReturnResponseHeader(returnResponseAttribute, returnType,
-                                lambdaBuilder);
-                        }
-                        else
-                        {
-                            if (returnBodyAttribute == null)
-                            {
-                                returnBodyAttribute = new BodyAttribute();
-                            }
-
-                            AttributeInterpreter.ReturnContentObject(returnBodyAttribute, returnType, isAsyncCall,
-                                lambdaBuilder);
-                        }
-                    }
+                    methodBuilder.AppendLine("仮request.Content = 仮content;");
                 }
 
-                methodBuilder.Append("}");
-                if (isAsyncCall)
-                {
-                    methodBuilder.Append(")");
-                }
-
-                methodBuilder.AppendLine(",");
-
-                if (!isAsyncCall)
-                {
-                    methodBuilder.Append("() => ");
-                }
-
-                methodBuilder.Append($"仮fallback?.{method.Name}(");
-                methodBuilder.Append(string.Join(", ", method.GetParameters().Select(p=>CompilerUtils.ToParameterUsage(p))));
-                methodBuilder.Append(")");
-                if (!isVoid && method.ReturnType.IsValueType)
-                {
-                    methodBuilder.Append($" ?? default({CompilerUtils.ToCompilableName(method.ReturnType)})");
-                }
-
-                methodBuilder.AppendLine(",");
-
-                methodBuilder.AppendLine("仮logger);");
-
-                methodBuilder.Append(isVoid ? string.Empty : "return ");
                 methodBuilder.AppendLine(isAsyncCall
-                    ? "await 仮command.ExecuteAsync();"
-                    : "仮command.Execute();");
+                    ? "var 仮response = await InvokeAsync(仮request);"
+                    : "var 仮response = Invoke(仮request);");
+
+                foreach (var entry in responseHeaders)
+                {
+                    methodBuilder.AppendLine(
+                        $"{entry.Value.Name} = GetHeaderValue<{CompilerUtils.ToCompilableName(entry.Value.ParameterType)}>(仮response, \"{entry.Key}\");");
+                }
+
+                if (!isVoid)
+                {
+                    var returnBodyAttribute = method.ReturnParameter?.GetCustomAttribute<BodyAttribute>();
+                    var returnResponseAttribute = method.ReturnParameter?.GetCustomAttribute<ResponseHeaderAttribute>();
+
+                    if (returnResponseAttribute != null && returnBodyAttribute != null)
+                    {
+                        throw new WebServiceCompileException(
+                            $"Cannot have different types of response attributes.  You had [{string.Join(", ", "Body", "ResponseHeader")}]");
+                    }
+
+                    if (returnResponseAttribute != null)
+                    {
+                        AttributeInterpreter.ReturnResponseHeader(returnResponseAttribute, returnType, methodBuilder);
+                    }
+                    else
+                    {
+                        if (returnBodyAttribute == null)
+                        {
+                            returnBodyAttribute = new BodyAttribute();
+                        }
+
+                        AttributeInterpreter.ReturnContentObject(returnBodyAttribute, returnType, isAsyncCall,
+                            methodBuilder);
+                    }
+                }
             }
 
             classBuilder.AppendLine("}");
-        }
+        }   
     }
 }
