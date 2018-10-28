@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections.Generic;
+using System.Reflection;
 
 namespace DHaven.Faux.Compiler
 {
@@ -15,6 +16,6 @@ namespace DHaven.Faux.Compiler
         /// <param name="typeInfo">the interface to generate an implementation for.</param>
         /// <param name="fullClassName">the implentation fully qualified class name.</param>
         /// <returns>the source code for the class as a string.</returns>
-        string GenerateSource(TypeInfo typeInfo, out string fullClassName);
+        IEnumerable<string> GenerateSource(TypeInfo typeInfo, out string fullClassName);
     }
 }

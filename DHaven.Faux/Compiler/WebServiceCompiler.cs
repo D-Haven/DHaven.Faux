@@ -67,15 +67,18 @@ namespace DHaven.Faux.Compiler
                 return;
             }
             
-            var sourceCode = serviceClassGenerator.GenerateSource(type, out fullyQualifiedClassName);
+            var sourceCodeList = serviceClassGenerator.GenerateSource(type, out fullyQualifiedClassName);
             fauxDiscovery.RegisterType(type, fullyQualifiedClassName);
-            
+
+            foreach (var sourceCode in sourceCodeList)
+            {
 #if NETSTANDARD
-            syntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(sourceCode));
+                syntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(sourceCode));
 #else
-            codeSources.Add(sourceCode);
+                codeSources.Add(sourceCode);
 #endif
-            
+            }
+
             logger.LogDebug($"Finished compiling the syntax tree for {fullyQualifiedClassName} generated from {type.FullName}");
         }
 

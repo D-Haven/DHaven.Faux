@@ -140,8 +140,9 @@ namespace DHaven.Faux.Compiler
             }
         }
 
-        internal static void InterpretRequestParameter(ParameterInfo parameter, IndentBuilder contentBuilder)
+        internal static void InterpretRequestParameter(ParameterInfo parameter, IndentBuilder contentBuilder , string prefix = null)
         {
+            prefix = prefix ?? string.Empty;
             var paramAttribute = parameter.GetCustomAttribute<RequestParameterAttribute>();
 
             if (paramAttribute == null)
@@ -153,7 +154,7 @@ namespace DHaven.Faux.Compiler
                 ? parameter.Name
                 : paramAttribute.Parameter;
 
-            contentBuilder.AppendLine($"仮reqParams.Add(\"{paramName}\", {parameter.Name}{(parameter.ParameterType.IsClass ? "?" : "")}.ToString());");
+            contentBuilder.AppendLine($"仮reqParams.Add(\"{paramName}\", {prefix}{parameter.Name}{(parameter.ParameterType.IsClass ? "?" : "")}.ToString());");
         }
 
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global

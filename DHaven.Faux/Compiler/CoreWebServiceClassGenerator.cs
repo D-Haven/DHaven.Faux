@@ -54,7 +54,7 @@ namespace DHaven.Faux.Compiler
             }
         }
 
-        public string GenerateSource(TypeInfo typeInfo, out string fullClassName)
+        public IEnumerable<string> GenerateSource(TypeInfo typeInfo, out string fullClassName)
         {
             if (!typeInfo.IsInterface || !typeInfo.IsPublic)
             {
@@ -68,6 +68,7 @@ namespace DHaven.Faux.Compiler
 
             var className = typeInfo.FullName?.Replace(".", string.Empty);
             fullClassName = $"{Config.RootNamespace}.{className}";
+            var sourceCodeList = new List<string>();
 
             using (logger.BeginScope("Generator {0}:", className))
             {
@@ -127,23 +128,22 @@ namespace DHaven.Faux.Compiler
 
                     logger.LogTrace("Source generated");
 
-                    if (!Config.OutputSourceFiles)
+                    if (Config.OutputSourceFiles)
                     {
-                        return sourceCode;
+                        var fullPath = Path.Combine(Config.SourceFilePath, $"{className}.cs");
+                        try
+                        {
+                            logger.LogTrace("Writing source file: {0}", fullPath);
+                            File.WriteAllText(fullPath, sourceCode, Encoding.UTF8);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning(ex, "Could not write the source code for {0}", fullPath);
+                        }
                     }
 
-                    var fullPath = Path.Combine(Config.SourceFilePath, $"{className}.cs");
-                    try
-                    {
-                        logger.LogTrace("Writing source file: {0}", fullPath);
-                        File.WriteAllText(fullPath, sourceCode, Encoding.UTF8);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogWarning(ex, "Could not write the source code for {0}", fullPath);
-                    }
-
-                    return sourceCode;
+                    sourceCodeList.Add(sourceCode);
+                    return sourceCodeList;
                 }
             }
         }
@@ -181,7 +181,7 @@ namespace DHaven.Faux.Compiler
             var attribute = method.GetCustomAttribute<HttpMethodAttribute>();
 
             classBuilder.Append($" {method.Name}(");
-            classBuilder.Append(string.Join(", ", method.GetParameters().Select(p => $"{CompilerUtils.ToCompilableName(p.ParameterType, p.IsOut)} {p.Name}")));
+            classBuilder.Append(string.Join(", ", method.GetParameters().Select(CompilerUtils.ToParameterDeclaration)));
             classBuilder.AppendLine(")");
             classBuilder.AppendLine("{");
             using (var methodBuilder = classBuilder.Indent())
@@ -220,13 +220,9 @@ namespace DHaven.Faux.Compiler
                     foreach (var parameter in method.GetParameters())
                     {
                         AttributeInterpreter.InterpretPathValue(parameter, lambdaBuilder);
-
                         AttributeInterpreter.InterpretRequestHeader(parameter, requestHeaders, contentHeaders);
-
                         AttributeInterpreter.InterpretBodyParameter(parameter, ref bodyParam, ref bodyAttr);
-
                         AttributeInterpreter.InterpretRequestParameter(parameter, lambdaBuilder);
-
                         AttributeInterpreter.InterpretResponseHeaderInParameters(parameter, isAsyncCall,
                             ref responseHeaders);
                     }
@@ -305,7 +301,7 @@ namespace DHaven.Faux.Compiler
                 }
 
                 methodBuilder.Append($"仮fallback?.{method.Name}(");
-                methodBuilder.Append(string.Join(", ", method.GetParameters().Select(p => p.Name)));
+                methodBuilder.Append(string.Join(", ", method.GetParameters().Select(p=>CompilerUtils.ToParameterUsage(p))));
                 methodBuilder.Append(")");
                 if (!isVoid && method.ReturnType.IsValueType)
                 {

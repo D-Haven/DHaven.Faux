@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -39,6 +40,7 @@ namespace DHaven.Faux.Compiler
 
             var inParams = method.GetParameters().Where(p => !p.IsOut).ToList();
             var outParams = method.GetParameters().Where(p => p.IsOut).ToList();
+            var attribute = method.GetCustomAttribute<HttpMethodAttribute>();
 
             using (logger.BeginScope("Generator {0}.{1}:", className, method.Name))
             using (var namespaceBuilder = new IndentBuilder())
@@ -73,7 +75,7 @@ namespace DHaven.Faux.Compiler
                                 $"        {CompilerUtils.ToCompilableName(inparam.ParameterType)} {inparam.Name},");
                         }
                         constructorBuilder.AppendLine("        Microsoft.Extensions.Logging.ILogger logger)");
-                        constructorBuilder.AppendLine($"    : base(new Steeltoe.CircuitBreaker.Hystrix.HystrixCommandOptions(Steeltoe.CircuitBreaker.Hystrix.HystrixCommandGroupKeyDefault.AsKey(\"{serviceName}\"), Steeltoe.CircuitBreaker.Hystrix.HystrixCommandKeyDefault.AsKey(\"{method.Name}\")),null,null,logger)");
+                        constructorBuilder.AppendLine($"    : base(new Steeltoe.CircuitBreaker.Hystrix.HystrixCommandOptions(Steeltoe.CircuitBreaker.Hystrix.HystrixCommandGroupKeyDefault.AsKey(\"{serviceName}\"), Steeltoe.CircuitBreaker.Hystrix.HystrixCommandKeyDefault.AsKey(\"{method.Name}\")), null, null, logger)");
                         constructorBuilder.AppendLine("{");
                         using (var insideBuilder = constructorBuilder.Indent())
                         {
@@ -94,6 +96,134 @@ namespace DHaven.Faux.Compiler
                         {
                             propertyBuilder.AppendLine($"public {CompilerUtils.ToCompilableName(property.ParameterType)} {property.Name} {{ get; private set; }}");
                         }
+                    }
+
+                    using (var runBuilder = classBuilder.Indent())
+                    {
+                        runBuilder.AppendLine($"protected override async System.Threading.Tasks.Task<{CompilerUtils.ToCompilableName(returnType)}> RunAsync()");
+                        runBuilder.AppendLine("{");
+
+                        using (var contentBuilder = runBuilder.Indent())
+                        {
+                            contentBuilder.AppendLine("var 仮variables = new System.Collections.Generic.Dictionary<string,object>();");
+                            contentBuilder.AppendLine("var 仮reqParams = new System.Collections.Generic.Dictionary<string,string>();");
+                            
+                            var contentHeaders = new Dictionary<string, ParameterInfo>();
+                            var requestHeaders = new Dictionary<string, ParameterInfo>();
+                            var responseHeaders = new Dictionary<string, ParameterInfo>();
+                            ParameterInfo bodyParam = null;
+                            BodyAttribute bodyAttr = null;
+
+                            foreach (var parameter in method.GetParameters())
+                            {
+                                AttributeInterpreter.InterpretPathValue(parameter, contentBuilder);
+                                AttributeInterpreter.InterpretRequestHeader(parameter, requestHeaders, contentHeaders);
+                                AttributeInterpreter.InterpretBodyParameter(parameter, ref bodyParam, ref bodyAttr);
+                                AttributeInterpreter.InterpretRequestParameter(parameter, contentBuilder, "仮");
+                                AttributeInterpreter.InterpretResponseHeaderInParameters(parameter, true, ref responseHeaders);
+                            }
+
+                            contentBuilder.AppendLine($"var 仮request = 仮core.CreateRequest({CompilerUtils.ToCompilableName(attribute.Method)}, \"{attribute.Path}\", 仮variables, 仮reqParams);");
+                            var hasContent =
+                                AttributeInterpreter.CreateContentObjectIfSpecified(bodyAttr, bodyParam, contentBuilder);
+
+                            foreach (var entry in requestHeaders)
+                            {
+                                contentBuilder.AppendLine($"仮request.Headers.Add(\"{entry.Key}\", {entry.Value.Name}{(entry.Value.ParameterType.IsClass ? "?" : "")}.ToString());");
+                            }
+
+                            if (hasContent)
+                            {
+                                // when setting content we can apply the contentHeaders
+                                foreach (var entry in contentHeaders)
+                                {
+                                    contentBuilder.AppendLine($"仮content.Headers.Add(\"{entry.Key}\", {entry.Value.Name}{(entry.Value.ParameterType.IsClass ? "?" : "")}.ToString());");
+                                }
+
+                                contentBuilder.AppendLine("仮request.Content = 仮content;");
+                            }
+
+                            contentBuilder.AppendLine("var 仮response = await 仮core.InvokeAsync(仮request);");
+
+                            foreach (var entry in responseHeaders)
+                            {
+                                contentBuilder.AppendLine(
+                                    $"{entry.Value.Name} = 仮core.GetHeaderValue<{CompilerUtils.ToCompilableName(entry.Value.ParameterType)}>(仮response, \"{entry.Key}\");");
+                            }
+                            
+                            if (!isVoid)
+                            {
+                                var returnBodyAttribute = method.ReturnParameter?.GetCustomAttribute<BodyAttribute>();
+                                var returnResponseAttribute =
+                                    method.ReturnParameter?.GetCustomAttribute<ResponseHeaderAttribute>();
+
+                                if (returnResponseAttribute != null && returnBodyAttribute != null)
+                                {
+                                    throw new WebServiceCompileException(
+                                        $"Cannot have different types of response attributes.  You had [{string.Join(", ", "Body", "ResponseHeader")}]");
+                                }
+
+                                if (returnResponseAttribute != null)
+                                {
+                                    AttributeInterpreter.ReturnResponseHeader(returnResponseAttribute, returnType,
+                                        contentBuilder);
+                                }
+                                else
+                                {
+                                    if (returnBodyAttribute == null)
+                                    {
+                                        returnBodyAttribute = new BodyAttribute();
+                                    }
+
+                                    AttributeInterpreter.ReturnContentObject(returnBodyAttribute, returnType, isAsyncCall,
+                                        contentBuilder);
+                                }
+                            }
+                        }
+
+                        runBuilder.AppendLine("}");
+                    }
+
+                    using (var fallbackBuilder = classBuilder.Indent())
+                    {
+                        fallbackBuilder.AppendLine($"protected override System.Threading.Tasks.Task<{CompilerUtils.ToCompilableName(returnType)}> RunFallbackAsync()");
+                        fallbackBuilder.AppendLine("{");
+
+                        using (var contentBuilder = fallbackBuilder.Indent())
+                        {
+                            foreach (var value in outParams)
+                            {
+                                contentBuilder.AppendLine($"{CompilerUtils.ToCompilableName(value.ParameterType)} 仮{value.Name} = default({CompilerUtils.ToCompilableName(value.ParameterType)});");
+                            }
+
+                            if (isAsyncCall || !isVoid)
+                            {
+                                contentBuilder.Append("var 仮value = ");
+                            }
+
+                            contentBuilder.Append($"仮fallback?.{method.Name}(");
+                            contentBuilder.Append(string.Join(", ",
+                                method.GetParameters().Select(p => CompilerUtils.ToParameterUsage(p, "仮"))));
+                            contentBuilder.AppendLine(");");
+
+                            foreach (var value in outParams)
+                            {
+                                contentBuilder.AppendLine($"{CompilerUtils.ToCompilableName(value.ParameterType)} 仮{value.Name} = default({CompilerUtils.ToCompilableName(value.ParameterType)});");
+                            }
+
+                            if (isAsyncCall)
+                            {
+                                contentBuilder.AppendLine("return 仮value;");
+                            }
+                            else
+                            {
+                                var returnVal = isVoid ? "string.Empty" : "仮value";
+                                contentBuilder.AppendLine(
+                                    $"return System.Threading.Tasks.Task.FromResult({returnVal});");
+                            }
+                        }
+
+                        fallbackBuilder.AppendLine("}");
                     }
 
                     classBuilder.AppendLine("}");

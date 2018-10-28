@@ -25,10 +25,7 @@ namespace DHaven.Faux.Test.ReturnTypes
 {
     public class ResponseHeaderTest
     {
-        // TODO: re-enable
-        const string skip = "ResponseHeaderTest disabled until the Hystrix support handles out and ref variables";
-        
-        [Fact(Skip = skip)]
+        [Fact]
         public async Task AsyncReceiveResponseHeader()
         {
             var service = Test.GenerateService<IReturnService>(Test.MockRequest(request =>
@@ -45,7 +42,7 @@ namespace DHaven.Faux.Test.ReturnTypes
             location.Should().BeEquivalentTo("http://return/abcd-1234");
         }
 
-        [Fact(Skip = skip)]
+        [Fact]
         public void ReceiveResponseHeader()
         {
                 var service = Test.GenerateService<IReturnService>(Test.MockRequest(request =>
@@ -62,7 +59,7 @@ namespace DHaven.Faux.Test.ReturnTypes
             location.Should().BeEquivalentTo("http://return/abcd-1234");
         }
 
-        [Fact(Skip = skip)]
+        [Fact]
         public async Task AsyncReceiveJsonSerializedObject()
         {
             var service = Test.GenerateService<IReturnService>(Test.MockRequest(request =>
@@ -81,7 +78,7 @@ namespace DHaven.Faux.Test.ReturnTypes
             value.IsValid.Should().BeTrue();
         }
 
-        [Fact(Skip = skip)]
+        [Fact]
         public void ReceiveJsonSerializedObject()
         {
             var service = Test.GenerateService<IReturnService>(Test.MockRequest(request =>
@@ -100,7 +97,7 @@ namespace DHaven.Faux.Test.ReturnTypes
             value.IsValid.Should().BeTrue();
         }
 
-        [Fact(Skip = skip)]
+        [Fact]
         public void CanGetResponseHeadersViaOutVariables()
         {
             var service = Test.GenerateService<IReturnService>(Test.MockRequest(request =>
