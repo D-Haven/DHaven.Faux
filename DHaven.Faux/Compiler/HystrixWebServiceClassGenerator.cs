@@ -15,12 +15,14 @@ namespace DHaven.Faux.Compiler
         public CompilerConfig Config { get; }
 
         private readonly ILogger<CoreWebServiceClassGenerator> logger;
+        private readonly IMethodClassGenerator methodGenerator;
         
-        public HystrixWebServiceClassGenerator(IOptions<CompilerConfig> options, ILogger<CoreWebServiceClassGenerator> logger)
+        public HystrixWebServiceClassGenerator(IOptions<CompilerConfig> options, IMethodClassGenerator methodClassGenerator, ILogger<CoreWebServiceClassGenerator> logger)
         {
             // This is temporary until I get the FauxServiceProvider working for options.
             Config = options?.Value ?? new CompilerConfig();
-            this.logger = logger;
+            this.logger = logger;            
+            methodGenerator = methodClassGenerator;
 
             if (string.IsNullOrEmpty(Config.RootNamespace))
             {
@@ -100,7 +102,8 @@ namespace DHaven.Faux.Compiler
 
                         foreach (var method in typeInfo.GetMethods())
                         {
-                            BuildMethod(classBuilder.Indent(), method);
+                            sourceCodeList.Add(methodGenerator.GenerateMethodClass(method, out var hystrixCommandName));
+                            BuildMethod(classBuilder.Indent(), method, hystrixCommandName);
                         }
 
                         classBuilder.AppendLine("}");
@@ -132,7 +135,7 @@ namespace DHaven.Faux.Compiler
             }
         }
  
-        private void BuildMethod(IndentBuilder classBuilder, MethodInfo method)
+        private void BuildMethod(IndentBuilder classBuilder, MethodInfo method, string hystrixCommandName)
         {
             var isAsyncCall = typeof(Task).IsAssignableFrom(method.ReturnType);
             var returnType = method.ReturnType;

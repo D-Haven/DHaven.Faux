@@ -51,6 +51,8 @@ namespace DHaven.Faux
             services.AddDiscoveryClient(new DiscoveryOptions(configuration) { ClientType = DiscoveryClientType.EUREKA });
             services.Configure<CompilerConfig>(configuration.GetSection("Faux"));
             services.AddSingleton<IWebServiceClassGenerator, CoreWebServiceClassGenerator>();
+            services.AddSingleton<IMethodClassGenerator, HystrixCommandClassGenerator>();
+            services.AddSingleton<IWebServiceClassGenerator, HystrixWebServiceClassGenerator>();
            
             services.AddSingleton(fauxDiscovery);
 

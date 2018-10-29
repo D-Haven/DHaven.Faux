@@ -85,18 +85,18 @@ namespace DHaven.Faux.HttpSupport
             return response;
         }
 
-        protected static StringContent ConvertToJson(object data)
+        public static StringContent ConvertToJson(object data)
         {
             var json = JsonConvert.SerializeObject(data);
             return  new StringContent(json, Encoding.UTF8, "application/json");
         }
 
-        protected static StreamContent StreamRawContent(Stream stream)
+        public static StreamContent StreamRawContent(Stream stream)
         {
             return new StreamContent(stream);
         }
 
-        protected TResponse ConvertToObject<TResponse>(HttpResponseMessage responseMessage)
+        public static TResponse ConvertToObject<TResponse>(HttpResponseMessage responseMessage)
         {
             return ConvertToObjectAsync<TResponse>(responseMessage).SpinWaitResult();
         }
