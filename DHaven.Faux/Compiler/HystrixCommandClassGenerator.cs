@@ -63,7 +63,7 @@ namespace DHaven.Faux.Compiler
 
                         foreach (var inField in inParams)
                         {
-                            fieldBuilder.AppendLine($"private readonly {CompilerUtils.ToCompilableName(inField.ParameterType)} 仮{inField.Name};");
+                            fieldBuilder.AppendLine($"private readonly {CompilerUtils.ToCompilableName(inField.ParameterType)} {inField.Name};");
                         }
                     }
 
@@ -87,7 +87,7 @@ namespace DHaven.Faux.Compiler
                             insideBuilder.AppendLine("仮fallback = fallback;");
                             foreach (var inparam in inParams)
                             {
-                                insideBuilder.AppendLine($"仮{inparam.Name} = {inparam.Name};");
+                                insideBuilder.AppendLine($"this.{inparam.Name} = {inparam.Name};");
                             }
                         }
                         constructorBuilder.AppendLine("}");
@@ -100,10 +100,12 @@ namespace DHaven.Faux.Compiler
                             propertyBuilder.AppendLine($"public {CompilerUtils.ToCompilableName(property.ParameterType)} {property.Name} {{ get; private set; }}");
                         }
                     }
+                    
+                    var taskType = isVoid ? "System.Reactive.Unit" : CompilerUtils.ToCompilableName(returnType);
 
                     using (var runBuilder = classBuilder.Indent())
                     {
-                        runBuilder.AppendLine($"protected override async System.Threading.Tasks.Task<{CompilerUtils.ToCompilableName(returnType)}> RunAsync()");
+                        runBuilder.AppendLine($"protected override async System.Threading.Tasks.Task<{taskType}> RunAsync()");
                         runBuilder.AppendLine("{");
 
                         using (var contentBuilder = runBuilder.Indent())
@@ -119,16 +121,16 @@ namespace DHaven.Faux.Compiler
 
                             foreach (var parameter in method.GetParameters())
                             {
-                                AttributeInterpreter.InterpretPathValue(parameter, contentBuilder, "仮");
+                                AttributeInterpreter.InterpretPathValue(parameter, contentBuilder);
                                 AttributeInterpreter.InterpretRequestHeader(parameter, requestHeaders, contentHeaders);
                                 AttributeInterpreter.InterpretBodyParameter(parameter, ref bodyParam, ref bodyAttr);
-                                AttributeInterpreter.InterpretRequestParameter(parameter, contentBuilder, "仮");
+                                AttributeInterpreter.InterpretRequestParameter(parameter, contentBuilder);
                                 AttributeInterpreter.InterpretResponseHeaderInParameters(parameter, false, ref responseHeaders);
                             }
 
                             contentBuilder.AppendLine($"var 仮request = 仮core.CreateRequest({CompilerUtils.ToCompilableName(attribute.Method)}, \"{attribute.Path}\", 仮variables, 仮reqParams);");
                             var hasContent =
-                                AttributeInterpreter.CreateContentObjectIfSpecified(bodyAttr, bodyParam, contentBuilder, "仮");
+                                AttributeInterpreter.CreateContentObjectIfSpecified(bodyAttr, bodyParam, contentBuilder);
 
                             foreach (var entry in requestHeaders)
                             {
@@ -151,10 +153,14 @@ namespace DHaven.Faux.Compiler
                             foreach (var entry in responseHeaders)
                             {
                                 contentBuilder.AppendLine(
-                                    $"{entry.Value.Name} = 仮core.GetHeaderValue<{CompilerUtils.ToCompilableName(entry.Value.ParameterType)}>(仮response, \"{entry.Key}\");");
+                                    $"{entry.Value.Name} = DHaven.Faux.HttpSupport.DiscoveryAwareBase.GetHeaderValue<{CompilerUtils.ToCompilableName(entry.Value.ParameterType)}>(仮response, \"{entry.Key}\");");
                             }
-                            
-                            if (!isVoid)
+
+                            if (isVoid)
+                            {
+                                contentBuilder.AppendLine("return System.Reactive.Unit.Default;");
+                            }
+                            else
                             {
                                 var returnBodyAttribute = method.ReturnParameter?.GetCustomAttribute<BodyAttribute>();
                                 var returnResponseAttribute =
@@ -189,14 +195,14 @@ namespace DHaven.Faux.Compiler
 
                     using (var fallbackBuilder = classBuilder.Indent())
                     {
-                        fallbackBuilder.AppendLine($"protected override System.Threading.Tasks.Task<{CompilerUtils.ToCompilableName(returnType)}> RunFallbackAsync()");
+                        fallbackBuilder.AppendLine($"protected override System.Threading.Tasks.Task<{taskType}> RunFallbackAsync()");
                         fallbackBuilder.AppendLine("{");
 
                         using (var contentBuilder = fallbackBuilder.Indent())
                         {
                             foreach (var value in outParams)
                             {
-                                contentBuilder.AppendLine($"{CompilerUtils.ToCompilableName(value.ParameterType)} 仮{value.Name} = default({CompilerUtils.ToCompilableName(value.ParameterType)});");
+                                contentBuilder.AppendLine($"{CompilerUtils.ToCompilableName(value.ParameterType)} {value.Name} = default({CompilerUtils.ToCompilableName(value.ParameterType)});");
                             }
 
                             if (isAsyncCall || !isVoid)
@@ -206,28 +212,26 @@ namespace DHaven.Faux.Compiler
 
                             contentBuilder.Append($"仮fallback?.{method.Name}(");
                             contentBuilder.Append(string.Join(", ",
-                                method.GetParameters().Select(p => CompilerUtils.ToParameterUsage(p, "仮"))));
-                            contentBuilder.AppendLine(");");
+                                method.GetParameters().Select(CompilerUtils.ToParameterUsage)));
+                            contentBuilder.Append(")");
+                            if (!isVoid && method.ReturnType.IsValueType)
+                            {
+                                contentBuilder.Append($" ?? default({CompilerUtils.ToCompilableName(method.ReturnType)})");
+                            }
+                            contentBuilder.AppendLine(";");
 
                             foreach (var value in outParams)
                             {
-                                contentBuilder.AppendLine($"{value.Name} = 仮{value.Name};");
+                                contentBuilder.AppendLine($"this.{value.Name} = {value.Name};");
                             }
 
                             if (isAsyncCall)
                             {
-                                contentBuilder.Append("return 仮value");
-
-                                if (!isVoid && method.ReturnType.IsValueType)
-                                {
-                                    contentBuilder.Append($" ?? default({CompilerUtils.ToCompilableName(method.ReturnType)})");
-                                }
-                                
-                                contentBuilder.AppendLine(";");
+                                contentBuilder.AppendLine("return 仮value;");
                             }
                             else
                             {
-                                var returnVal = isVoid ? "string.Empty" : "仮value";
+                                var returnVal = isVoid ? "System.Reactive.Unit.Default" : "仮value";
                                 contentBuilder.AppendLine(
                                     $"return System.Threading.Tasks.Task.FromResult({returnVal});");
                             }

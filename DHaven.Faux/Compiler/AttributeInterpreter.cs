@@ -26,7 +26,7 @@ namespace DHaven.Faux.Compiler
             "allow"
         };
 
-        internal static void InterpretPathValue(ParameterInfo parameter, IndentBuilder contentBuilder, string prefix = null)
+        internal static void InterpretPathValue(ParameterInfo parameter, IndentBuilder contentBuilder)
         {
             var pathValue = parameter.GetCustomAttribute<PathValueAttribute>();
 
@@ -35,9 +35,8 @@ namespace DHaven.Faux.Compiler
                 return;
             }
 
-            prefix = prefix ?? string.Empty;
             var key = string.IsNullOrEmpty(pathValue.Variable) ? parameter.Name : pathValue.Variable;
-            contentBuilder.AppendLine($"仮variables.Add(\"{key}\", {prefix}{parameter.Name});");
+            contentBuilder.AppendLine($"仮variables.Add(\"{key}\", {parameter.Name});");
         }
 
         internal static void InterpretRequestHeader(ParameterInfo parameter, Dictionary<string, ParameterInfo> requestHeaders, Dictionary<string, ParameterInfo> contentHeaders)
@@ -77,14 +76,13 @@ namespace DHaven.Faux.Compiler
             bodyParam = parameter;
         }
 
-        internal static bool CreateContentObjectIfSpecified(BodyAttribute bodyAttr, ParameterInfo bodyParam, IndentBuilder contentBuilder, string prefix = null)
+        internal static bool CreateContentObjectIfSpecified(BodyAttribute bodyAttr, ParameterInfo bodyParam, IndentBuilder contentBuilder)
         {
             if (bodyAttr == null || bodyParam == null)
             {
                 return false;
             }
 
-            prefix = prefix ?? string.Empty;
             var format = bodyAttr.Format;
 
             if (format == Format.Auto)
@@ -97,10 +95,10 @@ namespace DHaven.Faux.Compiler
             switch (format)
             {
                 case Format.Json:
-                    contentBuilder.AppendLine($"var 仮content = DHaven.Faux.HttpSupport.ConvertToJson({prefix}{bodyParam.Name});");
+                    contentBuilder.AppendLine($"var 仮content = DHaven.Faux.HttpSupport.DiscoveryAwareBase.ConvertToJson({bodyParam.Name});");
                     break;
                 case Format.Raw:
-                    contentBuilder.AppendLine($"var 仮content = DHaven.Faux.HttpSupport.StreamRawContent({prefix}{bodyParam.Name});");
+                    contentBuilder.AppendLine($"var 仮content = DHaven.Faux.HttpSupport.DiscoveryAwareBase.StreamRawContent({bodyParam.Name});");
                     break;
                 default:
                     return false;
@@ -142,9 +140,8 @@ namespace DHaven.Faux.Compiler
             }
         }
 
-        internal static void InterpretRequestParameter(ParameterInfo parameter, IndentBuilder contentBuilder, string prefix = null)
+        internal static void InterpretRequestParameter(ParameterInfo parameter, IndentBuilder contentBuilder)
         {
-            prefix = prefix ?? string.Empty;
             var paramAttribute = parameter.GetCustomAttribute<RequestParameterAttribute>();
 
             if (paramAttribute == null)
@@ -156,7 +153,7 @@ namespace DHaven.Faux.Compiler
                 ? parameter.Name
                 : paramAttribute.Parameter;
 
-            contentBuilder.AppendLine($"仮reqParams.Add(\"{paramName}\", {prefix}{parameter.Name}{(parameter.ParameterType.IsClass ? "?" : "")}.ToString());");
+            contentBuilder.AppendLine($"仮reqParams.Add(\"{paramName}\", {parameter.Name}{(parameter.ParameterType.IsClass ? "?" : "")}.ToString());");
         }
 
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global

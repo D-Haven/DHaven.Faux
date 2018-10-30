@@ -13,10 +13,9 @@ namespace DHaven.Faux.Compiler
             return $"{ToCompilableName(parameter.ParameterType, parameter.IsOut)} {parameter.Name}";
         }
 
-        public static string ToParameterUsage(ParameterInfo parameter, string prefix = null)
+        public static string ToParameterUsage(ParameterInfo parameter)
         {
-            prefix = prefix ?? string.Empty;
-            return parameter.IsOut ? $"out {prefix}{parameter.Name}" : $"{prefix}{parameter.Name}";
+            return parameter.IsOut ? $"out {parameter.Name}" : $"{parameter.Name}";
         }
 
         public static string ToCompilableName(HttpMethod method)
