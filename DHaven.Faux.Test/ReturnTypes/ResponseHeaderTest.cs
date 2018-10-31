@@ -119,6 +119,5 @@ namespace DHaven.Faux.Test.ReturnTypes
             mimeType.Should().StartWithEquivalent("application/json");
             location.Should().BeEquivalentTo("http://return/123");
         }
-
     }
 }

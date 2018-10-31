@@ -30,9 +30,10 @@ namespace DHaven.Faux.Compiler
 {
     public partial class WebServiceCompiler
     {
+        private enum BindingType { Core, Hystrix }
         private readonly ILogger<WebServiceCompiler> logger;
         private readonly FauxDiscovery fauxDiscovery;
-        private readonly IWebServiceClassGenerator serviceClassGenerator;
+        private readonly IDictionary<BindingType,IWebServiceClassGenerator> serviceClassGenerators = new Dictionary<BindingType,IWebServiceClassGenerator>();
 
 #if NETSTANDARD
         private readonly List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
@@ -40,10 +41,14 @@ namespace DHaven.Faux.Compiler
         private readonly List<string> codeSources = new List<string>();
 #endif
 
-        public WebServiceCompiler(FauxDiscovery fauxDiscovery, IWebServiceClassGenerator classGenerator, ILogger<WebServiceCompiler> logger)
+        public WebServiceCompiler(FauxDiscovery fauxDiscovery, IEnumerable<IWebServiceClassGenerator> classGenerators, ILogger<WebServiceCompiler> logger)
         {
             this.logger = logger;
-            serviceClassGenerator = classGenerator;
+            foreach(var classGenerator in classGenerators)
+            {
+                var type = classGenerator.GetType().Name.Contains("Hystrix") ? BindingType.Hystrix : BindingType.Core;
+                serviceClassGenerators.Add(type, classGenerator);
+            }
             this.fauxDiscovery = fauxDiscovery;
             
             foreach(var service in fauxDiscovery.GetAllFauxInterfaces())
@@ -66,16 +71,20 @@ namespace DHaven.Faux.Compiler
                 // already registered
                 return;
             }
-            
-            var sourceCode = serviceClassGenerator.GenerateSource(type, out fullyQualifiedClassName);
+
+            var binding = type.GetCustomAttribute<HystrixFauxClientAttribute>() == null ? BindingType.Core : BindingType.Hystrix;
+            var sourceCodeList = serviceClassGenerators[binding].GenerateSource(type, out fullyQualifiedClassName);
             fauxDiscovery.RegisterType(type, fullyQualifiedClassName);
-            
+
+            foreach (var sourceCode in sourceCodeList)
+            {
 #if NETSTANDARD
-            syntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(sourceCode));
+                syntaxTrees.Add(SyntaxFactory.ParseSyntaxTree(sourceCode));
 #else
-            codeSources.Add(sourceCode);
+                codeSources.Add(sourceCode);
 #endif
-            
+            }
+
             logger.LogDebug($"Finished compiling the syntax tree for {fullyQualifiedClassName} generated from {type.FullName}");
         }
 

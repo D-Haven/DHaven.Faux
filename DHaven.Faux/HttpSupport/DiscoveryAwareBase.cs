@@ -60,7 +60,7 @@ namespace DHaven.Faux.HttpSupport
             baseUri = new Uri(uriString);
         }
 
-        protected HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, IDictionary<string,object> pathVariables, IDictionary<string,string> requestParameters)
+        public HttpRequestMessage CreateRequest(HttpMethod method, string endpoint, IDictionary<string,object> pathVariables, IDictionary<string,string> requestParameters)
         {
             var serviceUri = GetServiceUri(endpoint, pathVariables, requestParameters);
             Debug.WriteLine($"Request: {serviceUri}");
@@ -72,7 +72,7 @@ namespace DHaven.Faux.HttpSupport
             return InvokeAsync(message).SpinWaitResult();
         }
 
-        protected async Task<HttpResponseMessage> InvokeAsync(HttpRequestMessage message)
+        public async Task<HttpResponseMessage> InvokeAsync(HttpRequestMessage message)
         {
             var response = await httpClient.SendAsync(message);
 
@@ -85,23 +85,23 @@ namespace DHaven.Faux.HttpSupport
             return response;
         }
 
-        protected static StringContent ConvertToJson(object data)
+        public static StringContent ConvertToJson(object data)
         {
             var json = JsonConvert.SerializeObject(data);
             return  new StringContent(json, Encoding.UTF8, "application/json");
         }
 
-        protected static StreamContent StreamRawContent(Stream stream)
+        public static StreamContent StreamRawContent(Stream stream)
         {
             return new StreamContent(stream);
         }
 
-        protected TResponse ConvertToObject<TResponse>(HttpResponseMessage responseMessage)
+        public static TResponse ConvertToObject<TResponse>(HttpResponseMessage responseMessage)
         {
             return ConvertToObjectAsync<TResponse>(responseMessage).SpinWaitResult();
         }
 
-        protected static T GetHeaderValue<T>(HttpResponseMessage responseMessage, string headerName)
+        public static T GetHeaderValue<T>(HttpResponseMessage responseMessage, string headerName)
         {
             // Because Microsoft.  Y U so stupid?
             var value = headerName.StartsWith("Content-") 
@@ -116,7 +116,7 @@ namespace DHaven.Faux.HttpSupport
             return JsonConvert.DeserializeObject<T>(value);
         }
 
-        protected static async Task<TResponse> ConvertToObjectAsync<TResponse>(HttpResponseMessage responseMessage)
+        public static async Task<TResponse> ConvertToObjectAsync<TResponse>(HttpResponseMessage responseMessage)
         {
             return responseMessage.StatusCode == HttpStatusCode.NoContent
                 ? default(TResponse)
