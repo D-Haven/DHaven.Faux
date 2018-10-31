@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -26,6 +27,7 @@ namespace DHaven.Faux.Compiler
         public string GenerateMethodClass(MethodInfo method, out string fullMethodClassName)
         {
             var typeInfo = method.DeclaringType;
+            Debug.Assert(typeInfo != null, nameof(typeInfo) + " is null");
             var className = $"{typeInfo.FullName?.Replace(".", string.Empty)}_{method.Name}";
             fullMethodClassName = $"{Config.RootNamespace}.{className}";
             var sealedString = Config.GenerateSealedClasses ? "sealed" : string.Empty;
