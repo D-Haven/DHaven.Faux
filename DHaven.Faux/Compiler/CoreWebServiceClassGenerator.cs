@@ -91,20 +91,17 @@ namespace DHaven.Faux.Compiler
                         using (var fieldBuilder = classBuilder.Indent())
                         {
                             fieldBuilder.AppendLine("private readonly Microsoft.Extensions.Logging.ILogger 仮logger;");
-                            fieldBuilder.AppendLine($"private readonly {typeInfo.FullName} 仮fallback;");
                         }
 
                         using (var constructorBuilder = classBuilder.Indent())
                         {
                             constructorBuilder.AppendLine($"public {className}(DHaven.Faux.HttpSupport.IHttpClient client,");
-                            constructorBuilder.AppendLine("        Microsoft.Extensions.Logging.ILogger logger,");
-                            constructorBuilder.AppendLine($"        {typeInfo.FullName} fallback)");
+                            constructorBuilder.AppendLine("        Microsoft.Extensions.Logging.ILogger logger)");
                             constructorBuilder.AppendLine($"    : base(client, \"{serviceName}\", \"{baseRoute}\")");
                             constructorBuilder.AppendLine("{");
                             using (var insideCxrBuilder = constructorBuilder.Indent())
                             {
                                 insideCxrBuilder.AppendLine("仮logger = logger;");
-                                insideCxrBuilder.AppendLine("仮fallback = fallback;");
                             }
 
                             constructorBuilder.AppendLine("}");

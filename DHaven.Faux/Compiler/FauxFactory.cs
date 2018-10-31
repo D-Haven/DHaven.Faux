@@ -24,9 +24,8 @@ namespace DHaven.Faux.Compiler
         {
             var classname = compiler.GetImplementationName(type);
             var info = generatedAssembly.GetType(classname).GetTypeInfo();
-            var constructor = info?.GetConstructor(new[] { typeof(IHttpClient), typeof(ILogger), type });
-            // TODO: create the fallback instance here.
-            return constructor?.Invoke(new object[] { overrideHttpClient, logger, null});
+            var constructor = info?.GetConstructor(new[] { typeof(IHttpClient), typeof(ILogger) });
+            return constructor?.Invoke(new object[] { overrideHttpClient, logger });
         }
 
         public object Create(TypeInfo type)

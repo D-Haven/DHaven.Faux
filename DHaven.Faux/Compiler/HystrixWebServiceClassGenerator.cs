@@ -60,6 +60,7 @@ namespace DHaven.Faux.Compiler
             {
                 var serviceName = typeInfo.GetCustomAttribute<FauxClientAttribute>().Name;
                 var baseRoute = typeInfo.GetCustomAttribute<FauxClientAttribute>().Route ?? string.Empty;
+                var fallbackClass = typeInfo.GetCustomAttribute<HystrixFauxClientAttribute>().Fallback;
                 var sealedString = Config.GenerateSealedClasses ? "sealed" : string.Empty;
 
                 logger.LogTrace("Beginning to generate source");
@@ -85,14 +86,16 @@ namespace DHaven.Faux.Compiler
                         using (var constructorBuilder = classBuilder.Indent())
                         {
                             constructorBuilder.AppendLine($"public {className}(DHaven.Faux.HttpSupport.IHttpClient client,");
-                            constructorBuilder.AppendLine("        Microsoft.Extensions.Logging.ILogger logger,");
-                            constructorBuilder.AppendLine($"        {typeInfo.FullName} fallback)");
+                            constructorBuilder.AppendLine("        Microsoft.Extensions.Logging.ILogger logger)");
                             constructorBuilder.AppendLine($"    : base(client, \"{serviceName}\", \"{baseRoute}\")");
                             constructorBuilder.AppendLine("{");
                             using (var insideCxrBuilder = constructorBuilder.Indent())
                             {
                                 insideCxrBuilder.AppendLine("仮logger = logger;");
-                                insideCxrBuilder.AppendLine("仮fallback = fallback;");
+                                if (fallbackClass != null)
+                                {
+                                    insideCxrBuilder.AppendLine($"仮fallback = new {CompilerUtils.ToCompilableName(fallbackClass)}();");
+                                }
                                 insideCxrBuilder.AppendLine(
                                     $"仮groupKey = Steeltoe.CircuitBreaker.Hystrix.HystrixCommandGroupKeyDefault.AsKey(\"{serviceName}\");");
                             }

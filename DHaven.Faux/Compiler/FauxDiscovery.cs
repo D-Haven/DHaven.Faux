@@ -99,6 +99,13 @@ namespace DHaven.Faux.Compiler
                         var faux = type.GetInterfaces().FirstOrDefault(IsFauxInterface);
                         if (faux == null) continue;
 
+                        var hystrixAttribute = faux.GetCustomAttribute<HystrixFauxClientAttribute>();
+                        if (type.FullName.Equals(hystrixAttribute?.Fallback?.FullName))
+                        {
+                            // Ignore Hystrix fallback classes during discovery process.
+                            continue;
+                        }
+
                         logger.LogTrace($"Found implementation {type.FullName} for interface {faux.FullName}, marked as registered.");
                         types.Add(faux, type);
 
