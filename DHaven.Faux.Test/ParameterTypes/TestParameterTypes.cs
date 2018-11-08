@@ -54,15 +54,13 @@ namespace DHaven.Faux.Test.ParameterTypes
         }
         
         [Fact]
-        public async Task GeneratesFullUriWhenPathVariablesArePresent()
+        public async Task GeneratesFullUriWhenPathVariablesArePresentAndRequestParametersAsWell()
         {
             var service = Test.GenerateService<IBlobStore>(Test.MockRequest(
                 req =>
                 {
                     req.Method.Should().BeEquivalentTo(HttpMethod.Get);
-                    req.RequestUri.ToString().Should().BeEquivalentTo("http://blob-service/api/storage/1234567890abcdef");
-                    req.Headers.GetValues("X-Content-Disposition").First().Should()
-                        .Be("attachment; filename=\"test2.png\"");
+                    req.RequestUri.ToString().Should().BeEquivalentTo("http://blob-service/api/storage/1234567890abcdef?override-content-disposition=attachment%3B+filename%3D\"test2.png\"");
                 },
                 new HttpResponseMessage(HttpStatusCode.NoContent)
                 {

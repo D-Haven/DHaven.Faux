@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Text;
 
 namespace DHaven.Faux.Compiler
 {
@@ -27,7 +26,7 @@ namespace DHaven.Faux.Compiler
             "allow"
         };
 
-        internal static void InterpretPathValue(ParameterInfo parameter, StringBuilder classBuilder)
+        internal static void InterpretPathValue(ParameterInfo parameter, IndentBuilder contentBuilder)
         {
             var pathValue = parameter.GetCustomAttribute<PathValueAttribute>();
 
@@ -37,7 +36,7 @@ namespace DHaven.Faux.Compiler
             }
 
             var key = string.IsNullOrEmpty(pathValue.Variable) ? parameter.Name : pathValue.Variable;
-            classBuilder.AppendLine($"            仮variables.Add(\"{key}\", {parameter.Name});");
+            contentBuilder.AppendLine($"仮variables.Add(\"{key}\", {parameter.Name});");
         }
 
         internal static void InterpretRequestHeader(ParameterInfo parameter, Dictionary<string, ParameterInfo> requestHeaders, Dictionary<string, ParameterInfo> contentHeaders)
@@ -77,7 +76,7 @@ namespace DHaven.Faux.Compiler
             bodyParam = parameter;
         }
 
-        internal static bool CreateContentObjectIfSpecified(BodyAttribute bodyAttr, ParameterInfo bodyParam, StringBuilder clasStringBuilder)
+        internal static bool CreateContentObjectIfSpecified(BodyAttribute bodyAttr, ParameterInfo bodyParam, IndentBuilder contentBuilder)
         {
             if (bodyAttr == null || bodyParam == null)
             {
@@ -96,10 +95,10 @@ namespace DHaven.Faux.Compiler
             switch (format)
             {
                 case Format.Json:
-                    clasStringBuilder.AppendLine($"            var 仮content = ConvertToJson({bodyParam.Name});");
+                    contentBuilder.AppendLine($"var 仮content = DHaven.Faux.HttpSupport.DiscoveryAwareBase.ConvertToJson({bodyParam.Name});");
                     break;
                 case Format.Raw:
-                    clasStringBuilder.AppendLine($"            var 仮content = StreamRawContent({bodyParam.Name});");
+                    contentBuilder.AppendLine($"var 仮content = DHaven.Faux.HttpSupport.DiscoveryAwareBase.StreamRawContent({bodyParam.Name});");
                     break;
                 default:
                     return false;
@@ -108,7 +107,7 @@ namespace DHaven.Faux.Compiler
             return true;
         }
 
-        internal static void ReturnContentObject(BodyAttribute bodyAttr, Type returnType, bool isAsyncCall, StringBuilder classBuilder)
+        internal static void ReturnContentObject(BodyAttribute bodyAttr, Type returnType, bool isAsyncCall, IndentBuilder contentBuilder)
         {
             if (bodyAttr == null || returnType == null)
             {
@@ -127,21 +126,21 @@ namespace DHaven.Faux.Compiler
             switch (format)
             {
                 case Format.Json:
-                    classBuilder.AppendLine(isAsyncCall
-                        ? $"            return await ConvertToObjectAsync<{CoreWebServiceClassGenerator.ToCompilableName(returnType)}>(仮response);"
-                        : $"            return ConvertToObject<{CoreWebServiceClassGenerator.ToCompilableName(returnType)}>(仮response);");
+                    contentBuilder.AppendLine(isAsyncCall
+                        ? $"return await DHaven.Faux.HttpSupport.DiscoveryAwareBase.ConvertToObjectAsync<{CompilerUtils.ToCompilableName(returnType)}>(仮response);"
+                        : $"return DHaven.Faux.HttpSupport.DiscoveryAwareBase.ConvertToObject<{CompilerUtils.ToCompilableName(returnType)}>(仮response);");
                     break;
                 case Format.Raw:
-                    classBuilder.AppendLine(isAsyncCall
-                        ? "            return await 仮response.Content.ReadAsStreamAsync();"
-                        : "            return 仮response.Content.ReadAsStreamAsync().Result;");
+                    contentBuilder.AppendLine(isAsyncCall
+                        ? "return await 仮response.Content.ReadAsStreamAsync();"
+                        : "return 仮response.Content.ReadAsStreamAsync().Result;");
                     break;
                 default:
                     return;
             }
         }
 
-        internal static void InterpretRequestParameter(ParameterInfo parameter, StringBuilder classBuilder)
+        internal static void InterpretRequestParameter(ParameterInfo parameter, IndentBuilder contentBuilder)
         {
             var paramAttribute = parameter.GetCustomAttribute<RequestParameterAttribute>();
 
@@ -154,7 +153,7 @@ namespace DHaven.Faux.Compiler
                 ? parameter.Name
                 : paramAttribute.Parameter;
 
-            classBuilder.AppendLine($"            仮reqParams.Add(\"{paramName}\", {parameter.Name}{(parameter.ParameterType.IsClass ? "?" : "")}.ToString());");
+            contentBuilder.AppendLine($"仮reqParams.Add(\"{paramName}\", {parameter.Name}{(parameter.ParameterType.IsClass ? "?" : "")}.ToString());");
         }
 
         // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Global
@@ -169,7 +168,7 @@ namespace DHaven.Faux.Compiler
 
             if (!parameter.IsOut)
             {
-                throw new WebServiceCompileException("[ResponseHeaderAttribute] must be used on out paramters or for the return type.");
+                throw new WebServiceCompileException("[ResponseHeaderAttribute] must be used on out parameters or for the return type.");
             }
 
             if (isAsync)
@@ -181,9 +180,9 @@ namespace DHaven.Faux.Compiler
             responseHeaders.Add(responseAttribute.Header, parameter);
         }
 
-        internal static void ReturnResponseHeader(ResponseHeaderAttribute responseHeaderAttribute, Type returnType, StringBuilder classBuilder)
+        internal static void ReturnResponseHeader(ResponseHeaderAttribute responseHeaderAttribute, Type returnType, IndentBuilder contentBuilder)
         {
-            classBuilder.AppendLine($"            return GetHeaderValue<{CoreWebServiceClassGenerator.ToCompilableName(returnType)}>(仮response, \"{responseHeaderAttribute.Header}\");");
+            contentBuilder.AppendLine($"return DHaven.Faux.HttpSupport.DiscoveryAwareBase.GetHeaderValue<{CompilerUtils.ToCompilableName(returnType)}>(仮response, \"{responseHeaderAttribute.Header}\");");
         }
     }
 }

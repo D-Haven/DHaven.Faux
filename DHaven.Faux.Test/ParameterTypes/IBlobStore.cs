@@ -28,11 +28,12 @@ namespace DHaven.Faux.Test.ParameterTypes
 
         [HttpGet("/{id}")]
         [return: Body(Format = Format.Raw)]
-        Task<Stream> Get([PathValue] string id, [RequestHeader("X-Content-Disposition")]
+        Task<Stream> Get([PathValue] string id, [RequestParameter("override-content-disposition")]
             string overrideDisposition);
 
         [HttpDelete("/{id}")]
         [return: Body(Format = Format.Json)]
         Task<bool> Delete([PathValue] string id);
+
     }
 }
