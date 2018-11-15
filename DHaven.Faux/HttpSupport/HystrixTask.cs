@@ -31,28 +31,4 @@ namespace DHaven.Faux.HttpSupport
             return Unit.Default;
         }
     }
-    
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
-    public class HystrixTask<TResult> : HystrixCommand<TResult>
-    {
-        private readonly Task<TResult> run;
-        private readonly Task<TResult> fallback;
-        
-        public HystrixTask(IHystrixCommandOptions options, Task<TResult> run, Task<TResult> fallback, ILogger logger)
-            : base(options, null, null, logger)
-        {
-            this.run = run;
-            this.fallback = fallback;
-        }
-
-        protected override Task<TResult> RunAsync()
-        {
-            return run;
-        }
-
-        protected override Task<TResult> RunFallbackAsync()
-        {
-            return fallback;
-        }
-    }
 }
