@@ -12,8 +12,7 @@ namespace DHaven.Faux.Test.Fallback
         public async Task ReturnsDefaultValueFromFallbackClass()
         {
             var fallback = new DummyFallback();
-            var service = Test.GenerateService<IFallbackService>(
-                Test.MockRequest(request => { }, new HttpResponseMessage(HttpStatusCode.BadGateway)));
+            var service = Test.GenerateService<IFallbackService>();
 
             var fortune = await service.GetFortune();
             fortune.Should().BeEquivalentTo(await fallback.GetFortune());
@@ -23,8 +22,7 @@ namespace DHaven.Faux.Test.Fallback
         public async Task ShouldMatchMethodForMethod()
         {
             var fallback = new DummyFallback();
-            var service = Test.GenerateService<IFallbackService>(
-                Test.MockRequest(request => { }, new HttpResponseMessage(HttpStatusCode.BadGateway)));
+            var service = Test.GenerateService<IFallbackService>();
 
             var fortune = await service.AddFortune("ignored");
             fortune.Should().BeEquivalentTo(await fallback.AddFortune("ignored"));

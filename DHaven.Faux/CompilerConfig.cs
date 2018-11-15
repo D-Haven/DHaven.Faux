@@ -13,15 +13,6 @@ namespace DHaven.Faux
             GenerateSealedClasses = true;
         }
 
-        public CompilerConfig(IConfiguration config)
-        {
-            var section = config.GetSection("Faux");
-            SourceFilePath = section.GetValue<string>(nameof(SourceFilePath));
-            OutputSourceFiles = section.GetValue<bool>(nameof(OutputSourceFiles));
-            RootNamespace = section.GetValue(nameof(RootNamespace), DefaultNamespace);
-            GenerateSealedClasses = section.GetValue(nameof(GenerateSealedClasses), true);
-        }
-
         /// <summary>
         /// Gets or sets the location where source files are written to disk.
         /// </summary>

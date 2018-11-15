@@ -17,6 +17,7 @@ using System;
 using System.Net.Http;
 using DHaven.Faux.HttpSupport;
 using Moq;
+using Steeltoe.Discovery.Client;
 
 namespace DHaven.Faux.Test
 {
@@ -24,6 +25,12 @@ namespace DHaven.Faux.Test
     {
         private static readonly FauxCollection Collection = new FauxCollection(typeof(Test));
 
+        public static TService GenerateService<TService>()
+            where TService : class
+        {
+            return Collection.GetInstance<TService>();
+        }
+        
         public static TService GenerateService<TService>(IHttpClient client)
             where TService : class
         {
