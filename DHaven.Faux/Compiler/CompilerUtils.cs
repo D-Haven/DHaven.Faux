@@ -3,11 +3,20 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using Steeltoe.CircuitBreaker.Hystrix;
 
 namespace DHaven.Faux.Compiler
 {
     internal static class CompilerUtils
     {
+        /// <summary>
+        /// This is the smallest footprint to ensure the Hystrix support is included
+        /// without actually affecting the coverage report too much.  A code reference
+        /// to a type in that library is all that is required.  The value is null and
+        /// the field is not used.
+        /// </summary>
+        private static readonly IHystrixCommandGroupKey ignoreMe;
+        
         public static string ToParameterDeclaration(ParameterInfo parameter)
         {
             return $"{ToCompilableName(parameter.ParameterType, parameter.IsOut)} {parameter.Name}";
