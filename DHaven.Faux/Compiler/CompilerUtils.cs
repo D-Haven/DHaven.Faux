@@ -15,7 +15,9 @@ namespace DHaven.Faux.Compiler
         /// to a type in that library is all that is required.  The value is null and
         /// the field is not used.
         /// </summary>
-        private static readonly IHystrixCommandGroupKey ignoreMe;
+#pragma warning disable 169
+        private static readonly IHystrixCommandGroupKey IgnoreMe;
+#pragma warning restore 169
         
         public static string ToParameterDeclaration(ParameterInfo parameter)
         {
