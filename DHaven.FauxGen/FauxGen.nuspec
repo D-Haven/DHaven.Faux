@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>FauxGen</id>
+    <version>1.3.0</version>
+    <authors>Berin Loritsch</authors>
+    <owners>Berin Loritsch</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">Apache-2.0</license>
+    <projectUrl>https://github.com/bloritsch/DHaven.Faux</projectUrl>
+    <description>Command line tool to generate assemblies so that they are not created at runtime.  Allows for some customization of the generated code.</description>
+    <releaseNotes>Updated to use the latest code from DHaven.Faux.</releaseNotes>
+    <copyright>Copyright 2018 by D-Haven.org</copyright>
+    <tags>webservice client generator</tags>
+    <repository type="Git" url="https://github.com/bloritsch/DHaven.Faux" />
+  </metadata>
+  <files>
+    <file src="_._" target="lib/netstandard1.0/" />
+    <file src="_._" target="lib/net45/" />
+    <file src="FauxGen.targets" target="build/netstandard1.0/FauxGen.targets" />
+    <file src="FauxGen.targets" target="build/net45/FauxGen.targets" />
+
+    <file src="GenerateFaux.targets" target="tools/" />
+    <file src="$publishdir$\net461\**\*" target="tools/net461/" />
+    <file src="$publishdir$\netcoreapp2.0\**\*" target="tools/netcoreapp2.0/" />
+  </files>
+</package>

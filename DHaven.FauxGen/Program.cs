@@ -25,19 +25,18 @@ namespace DHaven.FauxGen
 
             Parser.Default.ParseArguments<CommandLineOptions>(args)
                 .WithParsed(GenerateAssembly);
-
-            Console.In.ReadLine();
         }
 
         private static IConfiguration Configuration { get; set; }
 
         private static void GenerateAssembly(CommandLineOptions opts)
         {
-            var outputAssembly = opts.OutputAssemblyName ?? $"Generated.{Path.GetFileName(opts.InputAssemblyPath)}";
-            var assembly = Assembly.LoadFile(opts.InputAssemblyPath);
-
-            // create service provider
+            // create service provider which builds the logger
             var serviceProvider = ConfigureServices(new ServiceCollection()).BuildServiceProvider();
+
+            var outputAssembly = opts.OutputAssemblyName ?? $"Generated.{Path.GetFileName(opts.InputAssemblyPath)}";
+            logger.LogInformation($"Converting {opts.InputAssemblyPath} to {outputAssembly}");
+            var assembly = Assembly.LoadFile(opts.InputAssemblyPath);
 
             var classGenerator = serviceProvider.GetService<IWebServiceClassGenerator>();
             var compiler = serviceProvider.GetService<WebServiceCompiler>();

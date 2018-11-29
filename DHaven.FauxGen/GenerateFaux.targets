@@ -1,0 +1,13 @@
+﻿<Project>
+  <PropertyGroup>
+    <FauxGenFileExe Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">"$(MSBuildThisFileDirectory)net461\FauxGen.exe"</FauxGenFileExe>
+    <FauxGenFileExe Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp' OR '$(TargetFrameworkIdentifier)' == '.NETStandard'">dotnet "$(MSBuildThisFileDirectory)netcoreapp2.0\FauxGen.dll"</FauxGenFileExe>
+    <AssemblyIn>"$(ProjectDir)$(IntermediateOutputPath)$(AssemblyName).dll"</AssemblyIn>
+    <AssemblyOut>"$(ProjectDir)$(OutputPath)Faux.$(AssemblyName).dll"</AssemblyOut>
+    <Namespace>$(RootNamespace).Faux</Namespace>
+  </PropertyGroup>
+
+  <Target Name="GenerateTypescript" AfterTargets="CoreCompile">
+    <Exec Command="$(FauxGenFileExe) -a $(AssemblyIn) -o $(AssemblyOut) -n $(Namespace)" />
+  </Target>
+</Project>

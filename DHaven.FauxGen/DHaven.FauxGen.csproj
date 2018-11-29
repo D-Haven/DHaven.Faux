@@ -7,7 +7,6 @@
     <Company>DHaven.Faux</Company>
     <Description>Command line tool to generate assemblies so that they are not created at runtime.  Allows for some customization of the generated code.</Description>
     <Copyright>Copyright 2018 by D-Haven.org</Copyright>
-    <PackageLicenseUrl>https://github.com/bloritsch/DHaven.Faux/blob/develop/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/bloritsch/DHaven.Faux</PackageProjectUrl>
     <RepositoryUrl>https://github.com/bloritsch/DHaven.Faux</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
@@ -19,7 +18,7 @@
     <PackageReleaseNotes>Updated to use the latest code from DHaven.Faux.</PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="commandlineparser" Version="2.3.0" />
+    <PackageReference Include="commandlineparser" Version="2.3.0"  />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1" />
     <PackageReference Include="microsoft.extensions.logging.console" Version="2.1.1" />
   </ItemGroup>
@@ -29,4 +28,22 @@
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
+
+  <!-- Pack settings -->
+  <PropertyGroup>
+    <NoPackageAnalysis>true</NoPackageAnalysis>
+    <NuspecFile>FauxGen.nuspec</NuspecFile>
+    <IntermediatePackDir>$(MSBuildProjectDirectory)/bin/$(Configuration)/publish/</IntermediatePackDir>
+    <PublishDir>$(IntermediatePackDir)$(TargetFramework)/</PublishDir>
+    <NuspecProperties>publishDir=$([MSBuild]::NormalizeDirectory($(IntermediatePackDir)))</NuspecProperties>
+  </PropertyGroup>
+
+  <!-- Executes /t:Publish for all target frameworks before packing-->
+  <Target Name="PublishAll" BeforeTargets="GenerateNuspec">
+    <ItemGroup>
+      <_TargetFramework Include="$(TargetFrameworks)" />
+    </ItemGroup>
+    <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Publish" Properties="TargetFramework=%(_TargetFramework.Identity)" />
+  </Target>
+
 </Project>
