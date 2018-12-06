@@ -31,6 +31,7 @@
 
   <!-- Pack settings -->
   <PropertyGroup>
+    <Version Condition="'$(APPVEYOR_BUILD_VERSION)' != ''">$(APPVEYOR_BUILD_VERSION)</Version>
     <NoPackageAnalysis>true</NoPackageAnalysis>
     <NuspecFile>FauxGen.nuspec</NuspecFile>
     <IntermediatePackDir>$(MSBuildProjectDirectory)/bin/$(Configuration)/publish/</IntermediatePackDir>
