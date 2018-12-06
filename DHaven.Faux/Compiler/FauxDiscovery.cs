@@ -107,7 +107,7 @@ namespace DHaven.Faux.Compiler
                         if (faux == null) continue;
 
                         var hystrixAttribute = faux.GetCustomAttribute<HystrixFauxClientAttribute>();
-                        if (faux.FullName.Equals(hystrixAttribute?.Fallback?.FullName))
+                        if (string.Equals(type.FullName, hystrixAttribute?.Fallback?.FullName))
                         {
                             // Ignore Hystrix fallback classes during discovery process.
                             continue;
