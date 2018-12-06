@@ -109,7 +109,10 @@ namespace DHaven.Faux.Compiler
 
                         foreach (var method in typeInfo.GetMethods())
                         {
-                            BuildMethod(classBuilder, method);
+                            using (var methodBuilder = classBuilder.Indent())
+                            {
+                                BuildMethod(methodBuilder, method);
+                            }
                         }
 
                         classBuilder.AppendLine("}");
@@ -202,7 +205,7 @@ namespace DHaven.Faux.Compiler
 
                 methodBuilder.AppendLine(
                     $"var 仮request = CreateRequest({CompilerUtils.ToCompilableName(attribute.Method)}, \"{attribute.Path}\", 仮variables, 仮reqParams);");
-                var hasContent = AttributeInterpreter.CreateContentObjectIfSpecified(bodyAttr, bodyParam, classBuilder);
+                var hasContent = AttributeInterpreter.CreateContentObjectIfSpecified(bodyAttr, bodyParam, methodBuilder);
 
                 foreach (var entry in requestHeaders)
                 {

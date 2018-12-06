@@ -23,7 +23,7 @@ namespace DHaven.Faux.Compiler
         public object Create(TypeInfo type, IHttpClient overrideHttpClient)
         {
             var classname = compiler.GetImplementationName(type);
-            var info = generatedAssembly.GetType(classname).GetTypeInfo();
+            var info = generatedAssembly.GetType(classname)?.GetTypeInfo();
             var constructor = info?.GetConstructor(new[] { typeof(IHttpClient), typeof(ILogger) });
             return constructor?.Invoke(new object[] { overrideHttpClient, logger });
         }
