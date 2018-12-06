@@ -70,6 +70,13 @@ namespace DHaven.Faux.Compiler
         public void RegisterType(TypeInfo fauxInterface, string fullyQualifiedName)
         {
             generatedTypes.Add(fauxInterface, fullyQualifiedName);
+
+            if (!references.ContainsKey(fauxInterface.Assembly.FullName))
+            {
+                // Just in case, to handle the edge case that the assembly the
+                // type is included isn't in the list of references.
+                DiscoverMappings(fauxInterface.Assembly, fauxMapping.Result);
+            }
         }
 
         private void DiscoverMappings(Assembly assembly, IDictionary<Type,Type> types)
@@ -100,7 +107,7 @@ namespace DHaven.Faux.Compiler
                         if (faux == null) continue;
 
                         var hystrixAttribute = faux.GetCustomAttribute<HystrixFauxClientAttribute>();
-                        if (type.FullName.Equals(hystrixAttribute?.Fallback?.FullName))
+                        if (faux.FullName.Equals(hystrixAttribute?.Fallback?.FullName))
                         {
                             // Ignore Hystrix fallback classes during discovery process.
                             continue;

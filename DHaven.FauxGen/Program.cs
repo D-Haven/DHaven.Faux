@@ -12,10 +12,13 @@ namespace DHaven.FauxGen
 {
     internal static class Program
     {
+        private static readonly ILoggerFactory LogFactory = new LoggerFactory().AddConsole().AddDebug();
         private static ILogger logger;
 
         private static void Main(string[] args)
         {
+            logger = LogFactory.CreateLogger(typeof(Program));
+
             var builder = new ConfigurationBuilder()
                .SetBasePath(Directory.GetCurrentDirectory())
                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -31,12 +34,20 @@ namespace DHaven.FauxGen
 
         private static void GenerateAssembly(CommandLineOptions opts)
         {
-            // create service provider which builds the logger
-            var serviceProvider = ConfigureServices(new ServiceCollection()).BuildServiceProvider();
+            var absoluteAssemblyPath = Path.GetFullPath(opts.InputAssemblyPath);
+            var assembly = Assembly.LoadFile(absoluteAssemblyPath);
+     
+            var services = new ServiceCollection();
+            services.AddSingleton(LogFactory);
+            services.AddLogging();
+            services.AddOptions();
+            services.AddFaux(Configuration, assembly);
+
+            var serviceProvider = services.BuildServiceProvider();
 
             var outputAssembly = opts.OutputAssemblyName ?? $"Generated.{Path.GetFileName(opts.InputAssemblyPath)}";
-            logger.LogInformation($"Converting {opts.InputAssemblyPath} to {outputAssembly}");
-            var assembly = Assembly.LoadFile(opts.InputAssemblyPath);
+            
+            logger.LogInformation($"Converting {absoluteAssemblyPath} to {outputAssembly}");
 
             var classGenerator = serviceProvider.GetService<IWebServiceClassGenerator>();
             var compiler = serviceProvider.GetService<WebServiceCompiler>();
@@ -53,19 +64,6 @@ namespace DHaven.FauxGen
 
             compiler.Compile(outputAssembly);
             logger.LogInformation($"Successfully compiled the assembly {outputAssembly}");
-        }
-
-        private static IServiceCollection ConfigureServices(IServiceCollection services)
-        {
-            var logFactory = new LoggerFactory().AddConsole().AddDebug();
-            logger = logFactory.CreateLogger(typeof(Program));
-            services.AddSingleton(logFactory);
-            services.AddLogging();
-            services.AddOptions();
-
-            services.AddFaux(Configuration);
-
-            return services;
         }
     }
 }
