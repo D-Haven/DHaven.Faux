@@ -58,7 +58,7 @@ namespace DHaven.Faux
         public static IServiceCollection AddFaux(this IServiceCollection services, IConfiguration configuration,
             Assembly starterAssembly)
         {
-            services.AddLogging();
+            services.AddLogging(logger => logger.AddConfiguration(configuration));
             services.AddOptions();
 
             // Really need to handle the faux discovery adding new services at runtime

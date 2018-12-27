@@ -12,13 +12,10 @@ namespace DHaven.FauxGen
 {
     internal static class Program
     {
-        private static readonly ILoggerFactory LogFactory = new LoggerFactory().AddConsole().AddDebug();
         private static ILogger logger;
 
         private static void Main(string[] args)
         {
-            logger = LogFactory.CreateLogger(typeof(Program));
-
             var builder = new ConfigurationBuilder()
                .SetBasePath(Directory.GetCurrentDirectory())
                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -38,12 +35,12 @@ namespace DHaven.FauxGen
             var assembly = Assembly.LoadFile(absoluteAssemblyPath);
      
             var services = new ServiceCollection();
-            services.AddSingleton(LogFactory);
-            services.AddLogging();
+            services.AddLogging(logging => logging.AddDebug().AddConsole());
             services.AddOptions();
             services.AddFaux(Configuration, assembly);
 
             var serviceProvider = services.BuildServiceProvider();
+            logger = serviceProvider.GetService<ILogger>();
 
             var outputAssembly = opts.OutputAssemblyName ?? $"Generated.{Path.GetFileName(opts.InputAssemblyPath)}";
             

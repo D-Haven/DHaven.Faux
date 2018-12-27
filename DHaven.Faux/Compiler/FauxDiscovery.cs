@@ -30,7 +30,7 @@ namespace DHaven.Faux.Compiler
 
                 if (types.Count + unregistered.Count == 0)
                 {
-                    logger.LogWarning($"Unable to find any [FauxClient] interfaces in {startingAssembly.FullName} or it's dependencies");
+                    logger.LogWarning($"Unable to find any [FauxClient] interfaces in {startingAssembly.FullName} or its dependencies");
                 }
                 
                 return types;
@@ -70,13 +70,6 @@ namespace DHaven.Faux.Compiler
         public void RegisterType(TypeInfo fauxInterface, string fullyQualifiedName)
         {
             generatedTypes.Add(fauxInterface, fullyQualifiedName);
-
-            if (!references.ContainsKey(fauxInterface.Assembly.FullName))
-            {
-                // Just in case, to handle the edge case that the assembly the
-                // type is included isn't in the list of references.
-                DiscoverMappings(fauxInterface.Assembly, fauxMapping.Result);
-            }
         }
 
         private void DiscoverMappings(Assembly assembly, IDictionary<Type,Type> types)
@@ -119,7 +112,7 @@ namespace DHaven.Faux.Compiler
                         if (unregistered.Contains(faux))
                         {
                             logger.LogTrace($"Interface {faux.FullName} was marked as unregistered, removing from that list.");
-                            // If we found the interface before the implementation, add it here.
+                            // If we found the interface before the implementation, remove it here.
                             unregistered.Remove(faux);
                         }
                     }
