@@ -40,7 +40,7 @@ namespace DHaven.Faux.Compiler
                 returnType = method.ReturnType.GetGenericArguments()[0];
             }
 
-            var isVoid = returnType == typeof(void);
+            var isVoid = returnType == typeof(void) || (isAsyncCall && !method.ReturnType.IsConstructedGenericType);
             var treturn = isVoid ? string.Empty : $"<{CompilerUtils.ToCompilableName(returnType)}>";
 
             var inParams = method.GetParameters().Where(p => !p.IsOut).ToList();
@@ -197,7 +197,7 @@ namespace DHaven.Faux.Compiler
 
                     using (var fallbackBuilder = classBuilder.Indent())
                     {
-                        fallbackBuilder.AppendLine($"protected override System.Threading.Tasks.Task<{taskType}> RunFallbackAsync()");
+                        fallbackBuilder.AppendLine($"protected override async System.Threading.Tasks.Task<{taskType}> RunFallbackAsync()");
                         fallbackBuilder.AppendLine("{");
 
                         using (var contentBuilder = fallbackBuilder.Indent())
@@ -207,9 +207,14 @@ namespace DHaven.Faux.Compiler
                                 contentBuilder.AppendLine($"{CompilerUtils.ToCompilableName(value.ParameterType)} {value.Name} = default({CompilerUtils.ToCompilableName(value.ParameterType)});");
                             }
 
-                            if (isAsyncCall || !isVoid)
+                            if (!isVoid)
                             {
                                 contentBuilder.Append("var 仮value = ");
+                            }
+                            
+                            if (isAsyncCall)
+                            {
+                                contentBuilder.Append("await ");
                             }
 
                             contentBuilder.Append($"仮fallback?.{method.Name}(");
@@ -227,16 +232,8 @@ namespace DHaven.Faux.Compiler
                                 contentBuilder.AppendLine($"this.{value.Name} = {value.Name};");
                             }
 
-                            if (isAsyncCall)
-                            {
-                                contentBuilder.AppendLine("return 仮value;");
-                            }
-                            else
-                            {
-                                var returnVal = isVoid ? "System.Reactive.Unit.Default" : "仮value";
-                                contentBuilder.AppendLine(
-                                    $"return System.Threading.Tasks.Task.FromResult({returnVal});");
-                            }
+                            var returnVal = isVoid ? "System.Reactive.Unit.Default" : "仮value";
+                            contentBuilder.AppendLine($"return {returnVal};");
                         }
 
                         fallbackBuilder.AppendLine("}");

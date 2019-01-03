@@ -148,7 +148,7 @@ namespace DHaven.Faux.Compiler
                 returnType = method.ReturnType.GetGenericArguments()[0];
             }
 
-            var isVoid = returnType == typeof(void);
+            var isVoid = returnType == typeof(void) || (isAsyncCall && !method.ReturnType.IsConstructedGenericType);
 
             // Write the method declaration
 

@@ -17,7 +17,6 @@ using System;
 using System.Net.Http;
 using DHaven.Faux.HttpSupport;
 using Moq;
-using Steeltoe.Discovery.Client;
 
 namespace DHaven.Faux.Test
 {
