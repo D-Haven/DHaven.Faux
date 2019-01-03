@@ -30,7 +30,7 @@ namespace DHaven.Faux.Compiler
 
                 if (types.Count + unregistered.Count == 0)
                 {
-                    logger.LogWarning($"Unable to find any [FauxClient] interfaces in {startingAssembly.FullName} or it's dependencies");
+                    logger.LogWarning($"Unable to find any [FauxClient] interfaces in {startingAssembly.FullName} or its dependencies");
                 }
                 
                 return types;
@@ -100,7 +100,7 @@ namespace DHaven.Faux.Compiler
                         if (faux == null) continue;
 
                         var hystrixAttribute = faux.GetCustomAttribute<HystrixFauxClientAttribute>();
-                        if (type.FullName.Equals(hystrixAttribute?.Fallback?.FullName))
+                        if (string.Equals(type.FullName, hystrixAttribute?.Fallback?.FullName))
                         {
                             // Ignore Hystrix fallback classes during discovery process.
                             continue;
@@ -112,7 +112,7 @@ namespace DHaven.Faux.Compiler
                         if (unregistered.Contains(faux))
                         {
                             logger.LogTrace($"Interface {faux.FullName} was marked as unregistered, removing from that list.");
-                            // If we found the interface before the implementation, add it here.
+                            // If we found the interface before the implementation, remove it here.
                             unregistered.Remove(faux);
                         }
                     }

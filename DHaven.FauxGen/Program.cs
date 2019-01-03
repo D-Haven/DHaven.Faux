@@ -25,19 +25,26 @@ namespace DHaven.FauxGen
 
             Parser.Default.ParseArguments<CommandLineOptions>(args)
                 .WithParsed(GenerateAssembly);
-
-            Console.In.ReadLine();
         }
 
         private static IConfiguration Configuration { get; set; }
 
         private static void GenerateAssembly(CommandLineOptions opts)
         {
-            var outputAssembly = opts.OutputAssemblyName ?? $"Generated.{Path.GetFileName(opts.InputAssemblyPath)}";
-            var assembly = Assembly.LoadFile(opts.InputAssemblyPath);
+            var absoluteAssemblyPath = Path.GetFullPath(opts.InputAssemblyPath);
+            var assembly = Assembly.LoadFile(absoluteAssemblyPath);
+     
+            var services = new ServiceCollection();
+            services.AddLogging(logging => logging.AddDebug().AddConsole());
+            services.AddOptions();
+            services.AddFaux(Configuration, assembly);
 
-            // create service provider
-            var serviceProvider = ConfigureServices(new ServiceCollection()).BuildServiceProvider();
+            var serviceProvider = services.BuildServiceProvider();
+            logger = serviceProvider.GetService<ILogger>();
+
+            var outputAssembly = opts.OutputAssemblyName ?? $"Generated.{Path.GetFileName(opts.InputAssemblyPath)}";
+            
+            logger.LogInformation($"Converting {absoluteAssemblyPath} to {outputAssembly}");
 
             var classGenerator = serviceProvider.GetService<IWebServiceClassGenerator>();
             var compiler = serviceProvider.GetService<WebServiceCompiler>();
@@ -54,19 +61,6 @@ namespace DHaven.FauxGen
 
             compiler.Compile(outputAssembly);
             logger.LogInformation($"Successfully compiled the assembly {outputAssembly}");
-        }
-
-        private static IServiceCollection ConfigureServices(IServiceCollection services)
-        {
-            var logFactory = new LoggerFactory().AddConsole().AddDebug();
-            logger = logFactory.CreateLogger(typeof(Program));
-            services.AddSingleton(logFactory);
-            services.AddLogging();
-            services.AddOptions();
-
-            services.AddFaux(Configuration);
-
-            return services;
         }
     }
 }

@@ -30,24 +30,40 @@ namespace DHaven.Faux
     /// </summary>
     public static class FauxExtensions
     {
+
         /// <summary>
         /// Register an Interface for Faux to generate the actual instance.
         /// </summary>
         /// <param name="services">the IServiceCollection we are populating</param>
         /// <param name="configuration">the IConfiguration root object for services</param>
         /// <param name="starterType">a type in the highest level assembly you want searched</param>
-        /// <returns>the configured service collection</returns>
+        /// <returns>the configured service collection</returns>       
         [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
         [SuppressMessage("ReSharper", "UnusedMethodReturnValue.Global")]
         public static IServiceCollection AddFaux(this IServiceCollection services, IConfiguration configuration,
             Type starterType = null)
         {
-            services.AddLogging();
+            return AddFaux(services, configuration, starterType?.Assembly ?? Assembly.GetEntryAssembly());
+        }
+        
+        /// <summary>
+        /// Register an Interface for Faux to generate the actual instance.
+        /// </summary>
+        /// <param name="services">the IServiceCollection we are populating</param>
+        /// <param name="configuration">the IConfiguration root object for services</param>
+        /// <param name="starterAssembly">the highest level assembly you want searched</param>
+        /// <returns>the configured service collection</returns>       
+        [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
+        [SuppressMessage("ReSharper", "UnusedMethodReturnValue.Global")]
+        public static IServiceCollection AddFaux(this IServiceCollection services, IConfiguration configuration,
+            Assembly starterAssembly)
+        {
+            services.AddLogging(logger => logger.AddConfiguration(configuration));
             services.AddOptions();
 
             // Really need to handle the faux discovery adding new services at runtime
             var logFactory = new LoggerFactory().AddDebug(LogLevel.Trace);
-            var fauxDiscovery = new FauxDiscovery(starterType?.Assembly ?? Assembly.GetEntryAssembly(), logFactory.CreateLogger<FauxDiscovery>());
+            var fauxDiscovery = new FauxDiscovery(starterAssembly ?? Assembly.GetEntryAssembly(), logFactory.CreateLogger<FauxDiscovery>());
             services.AddDiscoveryClient(new DiscoveryOptions(configuration) { ClientType = DiscoveryClientType.EUREKA });
             services.Configure<CompilerConfig>(configuration.GetSection("Faux"));
             services.AddSingleton<IWebServiceClassGenerator, CoreWebServiceClassGenerator>();

@@ -53,10 +53,10 @@ namespace DHaven.Faux
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables();
-
-            services.AddSingleton(new LoggerFactory().AddDebug());
-
-            services.AddFaux(builder.Build(), starterType);
+            var config = builder.Build();
+            
+            services.AddLogging(logger => logger.AddDebug().AddConfiguration(config));
+            services.AddFaux(config, starterType);
 
             return services;
         }

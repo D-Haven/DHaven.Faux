@@ -36,15 +36,7 @@ namespace DHaven.Faux.Compiler
             return this;
         }
 
-        public IndentBuilder AppendLine()
-        {
-            builder.AppendLine();
-            lineStarted = false;
-            
-            return this;
-        }
-
-        public IndentBuilder AppendLine(string text)
+        public void AppendLine(string text)
         {
             if (!lineStarted)
             {
@@ -53,8 +45,8 @@ namespace DHaven.Faux.Compiler
 
             builder.AppendLine(text);
             lineStarted = false;
-            
-            return this;
+
+            return;
         }
 
         private void BeginLine()
