@@ -19,7 +19,7 @@ namespace DHaven.Faux.Compiler
             {
                 var compilation = CSharpCompilation.Create(assemblyName ?? Path.GetRandomFileName())
                     .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
-                    .AddReferences(fauxDiscovery.GetReferenceLocations().Select(location => MetadataReference.CreateFromFile(location)))
+                    .AddReferences(discovery.GetReferenceLocations().Select(location => MetadataReference.CreateFromFile(location)))
                     .AddSyntaxTrees(syntaxTrees);
 
                 var result = compilation.Emit(stream);

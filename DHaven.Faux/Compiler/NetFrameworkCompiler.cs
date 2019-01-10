@@ -20,7 +20,7 @@ namespace DHaven.Faux.Compiler
                 "System.Net.Http.dll",
             };
 
-            foreach (var assembly in fauxDiscovery.GetReferenceAssemblies())
+            foreach (var assembly in discovery.GetReferenceAssemblies())
             {
                 var assemblyPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Path.GetFileName(assembly.CodeBase));
                 assemblies.Add(assemblyPath);

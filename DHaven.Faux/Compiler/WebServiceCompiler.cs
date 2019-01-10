@@ -32,7 +32,7 @@ namespace DHaven.Faux.Compiler
     {
         private enum BindingType { Core, Hystrix }
         private readonly ILogger<WebServiceCompiler> logger;
-        private readonly FauxDiscovery fauxDiscovery;
+        private readonly FauxDiscovery discovery;
         private readonly IDictionary<BindingType,IWebServiceClassGenerator> serviceClassGenerators = new Dictionary<BindingType,IWebServiceClassGenerator>();
 
 #if NETSTANDARD
@@ -41,7 +41,7 @@ namespace DHaven.Faux.Compiler
         private readonly List<string> codeSources = new List<string>();
 #endif
 
-        public WebServiceCompiler(FauxDiscovery fauxDiscovery, IEnumerable<IWebServiceClassGenerator> classGenerators, ILogger<WebServiceCompiler> logger)
+        public WebServiceCompiler(FauxDiscovery discovery, IEnumerable<IWebServiceClassGenerator> classGenerators, ILogger<WebServiceCompiler> logger)
         {
             this.logger = logger;
             foreach(var classGenerator in classGenerators)
@@ -49,9 +49,9 @@ namespace DHaven.Faux.Compiler
                 var type = classGenerator.GetType().Name.Contains("Hystrix") ? BindingType.Hystrix : BindingType.Core;
                 serviceClassGenerators.Add(type, classGenerator);
             }
-            this.fauxDiscovery = fauxDiscovery;
+            this.discovery = discovery;
             
-            foreach(var service in fauxDiscovery.GetAllFauxInterfaces())
+            foreach(var service in this.discovery.GetAllFauxInterfaces())
             {
                 RegisterInterface(service);
             }
@@ -65,7 +65,7 @@ namespace DHaven.Faux.Compiler
         {
             logger.LogDebug($"Registering the interface: {type.FullName}");
 
-            var fullyQualifiedClassName = fauxDiscovery.GetImplementationNameFor(type);
+            var fullyQualifiedClassName = discovery.GetImplementationNameFor(type);
             if (fullyQualifiedClassName != null)
             {
                 // already registered
@@ -74,7 +74,7 @@ namespace DHaven.Faux.Compiler
 
             var binding = type.GetCustomAttribute<HystrixFauxClientAttribute>() == null ? BindingType.Core : BindingType.Hystrix;
             var sourceCodeList = serviceClassGenerators[binding].GenerateSource(type, out fullyQualifiedClassName);
-            fauxDiscovery.RegisterType(type, fullyQualifiedClassName);
+            discovery.RegisterType(type, fullyQualifiedClassName);
 
             foreach (var sourceCode in sourceCodeList)
             {
@@ -103,7 +103,7 @@ namespace DHaven.Faux.Compiler
 
         public string GetImplementationName(TypeInfo type)
         {
-            return fauxDiscovery.GetImplementationNameFor(type);
+            return discovery.GetImplementationNameFor(type);
         }
     }
 

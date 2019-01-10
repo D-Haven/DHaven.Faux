@@ -61,17 +61,16 @@ namespace DHaven.Faux
             services.AddLogging(logger => logger.AddConfiguration(configuration));
             services.AddOptions();
 
-            // Really need to handle the faux discovery adding new services at runtime
-            var logFactory = new LoggerFactory().AddDebug(LogLevel.Trace);
-            var fauxDiscovery = new FauxDiscovery(starterAssembly ?? Assembly.GetEntryAssembly(), logFactory.CreateLogger<FauxDiscovery>());
+            //services.AddSingleton<IStarterAssembly>(new StarterAssembly(starterAssembly));
+            var fauxDiscovery = new FauxDiscovery(new StarterAssembly(starterAssembly), new LoggerFactory().CreateLogger<FauxDiscovery>());
+            services.AddSingleton(fauxDiscovery);
+
             services.AddDiscoveryClient(new DiscoveryOptions(configuration) { ClientType = DiscoveryClientType.EUREKA });
             services.Configure<CompilerConfig>(configuration.GetSection("Faux"));
             services.AddSingleton<IWebServiceClassGenerator, CoreWebServiceClassGenerator>();
             services.AddSingleton<IMethodClassGenerator, HystrixCommandClassGenerator>();
             services.AddSingleton<IWebServiceClassGenerator, HystrixWebServiceClassGenerator>();
            
-            services.AddSingleton(fauxDiscovery);
-
             services.AddSingleton<WebServiceCompiler>();
             services.AddSingleton<IFauxFactory, FauxFactory>();
 

@@ -17,9 +17,11 @@ namespace DHaven.Faux.Compiler
         private readonly IDictionary<TypeInfo,string> generatedTypes = new Dictionary<TypeInfo, string>();
         private readonly ILogger<FauxDiscovery> logger;
 
-        internal FauxDiscovery(Assembly startingAssembly, ILogger<FauxDiscovery> log)
+        public FauxDiscovery(IStarterAssembly starter, ILogger<FauxDiscovery> log)
         {
             logger = log;
+            var startingAssembly = starter.Assembly;
+
             fauxMapping = Task.Run(
                 (Func<IDictionary<Type,Type>>)(() =>
             {
