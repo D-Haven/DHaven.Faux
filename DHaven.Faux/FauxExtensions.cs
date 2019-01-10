@@ -61,6 +61,7 @@ namespace DHaven.Faux
             services.AddLogging(logger => logger.AddConfiguration(configuration));
             services.AddOptions();
 
+            // This should be registered as a normal service so I can use the logger that was defined above.
             //services.AddSingleton<IStarterAssembly>(new StarterAssembly(starterAssembly));
             var fauxDiscovery = new FauxDiscovery(new StarterAssembly(starterAssembly), new LoggerFactory().CreateLogger<FauxDiscovery>());
             services.AddSingleton(fauxDiscovery);
@@ -82,6 +83,9 @@ namespace DHaven.Faux
                 return new HttpClientWrapper(new DiscoveryHttpClientHandler(client, logger));
             });
 
+            // This section wouldn't be necessary if I could register a more generic factory with
+            // the Microsoct DI libraries.  I hae an open ticket https://github.com/aspnet/Extensions/issues/929
+            // to cover this
             foreach (var info in fauxDiscovery.GetAllFauxInterfaces())
             {
                 services.AddSingleton(info, provider =>
