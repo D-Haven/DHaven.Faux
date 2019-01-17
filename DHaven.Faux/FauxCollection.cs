@@ -10,7 +10,9 @@ using System.Reflection;
 namespace DHaven.Faux
 {
     /// <summary>
-    /// Registers and creates all the Faux generated services in your application.
+    /// Registers and creates all the Faux generated services in your application.  Do not
+    /// use this class if you are using Dependency Injection... this is intended for quick
+    /// and dirty stand-alone applications where there is no other option.
     /// </summary>
     /// <remarks>
     /// NOTE: Do not use this class if you are already using Dependency Injection (i.e. in
@@ -22,10 +24,10 @@ namespace DHaven.Faux
         private readonly IServiceProvider serviceProvider;
         private readonly IFauxFactory factory;
 
-        public FauxCollection(Type starterType)
+        public FauxCollection(Type starterType, IConfiguration configuration = null)
         {
             var collection = new ServiceCollection();
-            serviceProvider = ConfigureServices(collection, starterType).BuildServiceProvider();
+            serviceProvider = ConfigureServices(collection, configuration, starterType).BuildServiceProvider();
 
             factory = serviceProvider.GetRequiredService<IFauxFactory>();
         }
@@ -47,16 +49,20 @@ namespace DHaven.Faux
             return factory.Create(service, client);
         }
 
-        private static IServiceCollection ConfigureServices(IServiceCollection services, Type starterType)
+        private static IServiceCollection ConfigureServices(IServiceCollection services, IConfiguration configuration,
+            Type starterType)
         {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddEnvironmentVariables();
-            var config = builder.Build();
-            
-            services.AddLogging(logger => logger.AddDebug().AddConfiguration(config));
-            services.AddFaux(config, starterType);
+            if (configuration == null)
+            {
+                var builder = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                    .AddEnvironmentVariables();
+                configuration = builder.Build();
+            }
+
+            services.AddLogging(logger => logger.AddDebug().AddConfiguration(configuration));
+            services.AddFaux(configuration, starterType);
 
             return services;
         }
