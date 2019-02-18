@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;NET461</TargetFrameworks>
-    <Authors>Berin Loritsch</Authors>
+    <Authors>D-Haven.org</Authors>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Description>DotNet implementation of NetFlix Feign (https://github.com/OpenFeign/feign).  Integrates with Microsoft DependencyInjection to generate the wrapper code from an interface representing a Rest end point.</Description>
-    <Copyright>Copyright 2017 by D-Haven.org</Copyright>
+    <Copyright>Copyright 2019 by D-Haven.org</Copyright>
     <Company>DHaven.Faux</Company>
     <PackageLicenseUrl>https://github.com/bloritsch/DHaven.Faux/blob/develop/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/bloritsch/DHaven.Faux</PackageProjectUrl>
