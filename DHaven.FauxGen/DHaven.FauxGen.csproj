@@ -18,7 +18,7 @@
     <PackageReleaseNotes>Updated to use the latest code from DHaven.Faux.</PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="commandlineparser" Version="2.3.0" />
+    <PackageReference Include="commandlineparser" Version="2.4.3" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
     <PackageReference Include="microsoft.extensions.logging.console" Version="2.2.0" />
   </ItemGroup>

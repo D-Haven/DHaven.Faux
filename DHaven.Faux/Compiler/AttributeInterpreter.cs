@@ -26,6 +26,11 @@ namespace DHaven.Faux.Compiler
             "allow"
         };
 
+        internal static string GetServiceName(this TypeInfo typeInfo)
+        {
+            return typeInfo.GetCustomAttribute<FauxClientAttribute>()?.Name ?? string.Empty;
+        }
+
         internal static void InterpretPathValue(ParameterInfo parameter, IndentBuilder contentBuilder)
         {
             var pathValue = parameter.GetCustomAttribute<PathValueAttribute>();

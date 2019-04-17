@@ -1,4 +1,5 @@
-﻿using DHaven.Faux.HttpSupport;
+﻿using System.Net.Http;
+using DHaven.Faux.HttpSupport;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
 
@@ -6,14 +7,14 @@ namespace DHaven.Faux.Compiler
 {
     public class FauxFactory : IFauxFactory
     {
-        private readonly IHttpClient client;
+        private readonly IHttpClientFactory clientFactory;
         private readonly WebServiceCompiler compiler;
         private readonly Assembly generatedAssembly;
         private readonly ILogger<FauxFactory> logger;
 
-        public FauxFactory(WebServiceCompiler compiler, IHttpClient client, ILogger<FauxFactory> logger)
+        public FauxFactory(WebServiceCompiler compiler, IHttpClientFactory clientFactory, ILogger<FauxFactory> logger)
         {
-            this.client = client;
+            this.clientFactory = clientFactory;
             this.compiler = compiler;
             this.logger = logger;
 
@@ -30,7 +31,7 @@ namespace DHaven.Faux.Compiler
 
         public object Create(TypeInfo type)
         {
-            return Create(type, client);
+            return Create(type, new HttpClientWrapper(clientFactory.CreateClient()));
         }
     }
 }

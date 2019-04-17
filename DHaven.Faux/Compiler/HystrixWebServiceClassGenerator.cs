@@ -58,7 +58,7 @@ namespace DHaven.Faux.Compiler
 
             using (logger.BeginScope("Generator {0}:", className))
             {
-                var serviceName = typeInfo.GetCustomAttribute<FauxClientAttribute>().Name;
+                var serviceName = typeInfo.GetServiceName();
                 var baseRoute = typeInfo.GetCustomAttribute<FauxClientAttribute>().Route ?? string.Empty;
                 var fallbackClass = typeInfo.GetCustomAttribute<HystrixFauxClientAttribute>().Fallback;
                 var sealedString = Config.GenerateSealedClasses ? "sealed" : string.Empty;

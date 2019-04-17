@@ -25,9 +25,9 @@ namespace DHaven.Faux.HttpSupport
     {
         private readonly HttpClient client;
         
-        public HttpClientWrapper(HttpMessageHandler handler)
+        public HttpClientWrapper(HttpClient client)
         {
-            client = new HttpClient(handler, false);
+            this.client = client;
             client.DefaultRequestHeaders
                 .Accept
                 .Add(new MediaTypeWithQualityHeaderValue("application/json"));

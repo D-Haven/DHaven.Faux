@@ -15,12 +15,17 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Http;
 using System.Reflection;
 using DHaven.Faux.Compiler;
 using DHaven.Faux.HttpSupport;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Steeltoe.Common.Discovery;
+using Steeltoe.Common.Http.Discovery;
+using Steeltoe.Common.Http.LoadBalancer;
+using Steeltoe.Common.LoadBalancer;
 using Steeltoe.Discovery.Client;
 
 namespace DHaven.Faux
@@ -58,15 +63,13 @@ namespace DHaven.Faux
         public static IServiceCollection AddFaux(this IServiceCollection services, IConfiguration configuration,
             Assembly starterAssembly)
         {
+            // Infrastructure stuff
             services.AddLogging(logger => logger.AddConfiguration(configuration));
             services.AddOptions();
+            services.AddHttpClient();
+            services.AddDiscoveryClient(configuration);    
 
-            // This should be registered as a normal service so I can use the logger that was defined above.
-            //services.AddSingleton<IStarterAssembly>(new StarterAssembly(starterAssembly));
-            var fauxDiscovery = new FauxDiscovery(new StarterAssembly(starterAssembly), new LoggerFactory().CreateLogger<FauxDiscovery>());
-            services.AddSingleton(fauxDiscovery);
-
-            services.AddDiscoveryClient(new DiscoveryOptions(configuration) { ClientType = DiscoveryClientType.EUREKA });
+            // Set up the easy stuff (class generators, etc.)
             services.Configure<CompilerConfig>(configuration.GetSection("Faux"));
             services.AddSingleton<IWebServiceClassGenerator, CoreWebServiceClassGenerator>();
             services.AddSingleton<IMethodClassGenerator, HystrixCommandClassGenerator>();
@@ -75,23 +78,20 @@ namespace DHaven.Faux
             services.AddSingleton<WebServiceCompiler>();
             services.AddSingleton<IFauxFactory, FauxFactory>();
 
-            services.AddSingleton<IHttpClient>(provider => 
-            {
-                var client = provider.GetService<IDiscoveryClient>();
-                var logger = provider.GetRequiredService<ILogger<DiscoveryHttpClientHandler>>();
-                
-                return new HttpClientWrapper(new DiscoveryHttpClientHandler(client, logger));
-            });
+            // This should be registered as a normal service so I can use the logger that was defined above.
+            var fauxDiscovery = new FauxDiscovery(new StarterAssembly(starterAssembly), new LoggerFactory().CreateLogger<FauxDiscovery>());
+            services.AddSingleton(fauxDiscovery);
 
             // This section wouldn't be necessary if I could register a more generic factory with
-            // the Microsoct DI libraries.  I hae an open ticket https://github.com/aspnet/Extensions/issues/929
+            // the Microsoft DI libraries.  I have an open ticket https://github.com/aspnet/Extensions/issues/929
             // to cover this
-            foreach (var info in fauxDiscovery.GetAllFauxInterfaces())
+            foreach (var typeInfo in fauxDiscovery.GetAllFauxInterfaces())
             {
-                services.AddSingleton(info, provider =>
+                services.AddHttpClient(typeInfo.GetServiceName()).AddRoundRobinLoadBalancer();
+                services.AddTransient(typeInfo, provider =>
                 {
                     var factory = provider.GetRequiredService<IFauxFactory>();
-                    return factory.Create(info);
+                    return factory.Create(typeInfo);
                 });
             }
 
